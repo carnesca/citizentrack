@@ -16,19 +16,14 @@ export function ActivityHighlights({
     <div className="grid gap-4 lg:grid-cols-2">
       <Card className="gap-0 border-border bg-card">
         <CardHeader className="pb-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex min-w-0 items-start gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <PlusCircle className="h-5 w-5" />
-              </span>
-              <div className="min-w-0">
-                <CardTitle className="text-base sm:text-lg">Latest Application Activity</CardTitle>
-                <p className="mt-1 text-sm text-muted-foreground">{latestApplicationDescription(highlights)}</p>
-              </div>
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <PlusCircle className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <CardTitle className="text-base sm:text-lg">Latest Application Activity</CardTitle>
+              <p className="mt-1 text-sm text-muted-foreground">{latestApplicationDescription(highlights)}</p>
             </div>
-            <Badge tone="blue" className="justify-self-start px-2.5 py-1 sm:justify-self-end">
-              {formatCount(highlights.applications_added_last_30_days)} added in last 30 days
-            </Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
