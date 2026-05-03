@@ -23,7 +23,7 @@ export function ActivityHighlights({
               </span>
               <div className="min-w-0">
                 <CardTitle className="text-base sm:text-lg">Latest Application Activity</CardTitle>
-                <p className="mt-1 text-sm text-muted-foreground">Most recent application added</p>
+                <p className="mt-1 text-sm text-muted-foreground">{latestApplicationDescription(highlights)}</p>
               </div>
             </div>
             <Badge tone="blue" className="justify-self-start px-2.5 py-1 sm:justify-self-end">
@@ -34,21 +34,28 @@ export function ActivityHighlights({
         <CardContent className="space-y-4">
           <div>
             <p className="font-mono text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-              {formatDateTime(highlights.latest_application_added_at)}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Latest update: {formatDateTime(highlights.latest_application_updated_at)}
+              {formatDateTime(highlights.latest_application_activity_at ?? highlights.latest_application_added_at)}
             </p>
           </div>
 
-          <div className="grid gap-3 border-t border-border pt-4 sm:grid-cols-2">
-            <ActivityStat
+          <div className="grid gap-3 border-t border-border pt-4 sm:grid-cols-4">
+            <Metric
+              label="Added Today"
+              value={formatCount(highlights.applications_added_today ?? 0)}
+            />
+            <Metric
+              label="Updated Today"
+              value={formatCount(highlights.applications_updated_today ?? 0)}
+            />
+            <Metric
               label="Added Last 7 Days"
               value={formatCount(highlights.applications_added_last_7_days ?? 0)}
+              trend={getTrend(highlights.applications_added_last_7_days ?? 0, highlights.applications_added_previous_7_days ?? 0)}
             />
-            <ActivityStat
+            <Metric
               label="Updated Last 7 Days"
               value={formatCount(highlights.applications_updated_last_7_days ?? 0)}
+              trend={getTrend(highlights.applications_updated_last_7_days ?? 0, highlights.applications_updated_previous_7_days ?? 0)}
             />
           </div>
         </CardContent>
@@ -89,20 +96,14 @@ export function ActivityHighlights({
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+type Trend = "increasing" | "decreasing" | "flat";
+
+function Metric({ label, value, trend }: { label: string; value: string; trend?: Trend }) {
   return (
     <div className="min-w-0">
       <p className="text-xs font-medium leading-5 text-muted-foreground">{label}</p>
       <p className="mt-1 font-mono text-lg font-semibold text-foreground">{value}</p>
-    </div>
-  );
-}
-
-function ActivityStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md bg-secondary/55 px-3 py-2">
-      <p className="text-xs font-medium leading-5 text-muted-foreground">{label}</p>
-      <p className="mt-1 font-mono text-lg font-semibold text-foreground">{value}</p>
+      {trend ? <p className={`mt-1 text-xs font-medium ${trendClassName(trend)}`}>{toTrendLabel(trend)}</p> : null}
     </div>
   );
 }
@@ -132,4 +133,27 @@ function formatMonths(value: number | null) {
 
 function formatCount(value: number) {
   return value.toLocaleString("en-US");
+}
+
+function latestApplicationDescription(highlights: DashboardActivityHighlights) {
+  if (highlights.latest_application_activity_kind === "updated") return "Most recent application updated";
+  return "Most recent application added";
+}
+
+function getTrend(current: number, previous: number): Trend {
+  if (current > previous) return "increasing";
+  if (current < previous) return "decreasing";
+  return "flat";
+}
+
+function toTrendLabel(trend: Trend) {
+  if (trend === "increasing") return "Increasing";
+  if (trend === "decreasing") return "Decreasing";
+  return "Flat";
+}
+
+function trendClassName(trend: Trend) {
+  if (trend === "increasing") return "text-success";
+  if (trend === "decreasing") return "text-danger";
+  return "text-muted-foreground";
 }
