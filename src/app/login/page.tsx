@@ -17,7 +17,7 @@ export default async function LoginPage({
   const params = await searchParams;
   const initialError =
     params.error === "invalid-link"
-      ? "That sign-in link is invalid or expired. Sign in with your email and password."
+      ? "That sign-in link is invalid or expired. Try Google again or sign in with your email and password."
       : null;
 
   return (
@@ -38,7 +38,7 @@ export default async function LoginPage({
             Track your path to German citizenship.
           </h1>
           <p className="mt-3 text-base leading-7 text-muted-foreground">
-            Create a free account to keep your timeline updated and improve the shared dashboard.
+            Create a free account with Google or email/password to keep your timeline updated and improve the shared dashboard.
           </p>
 
           <div className="mt-8 space-y-4 text-left">

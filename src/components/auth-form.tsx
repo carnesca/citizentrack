@@ -3,14 +3,16 @@
 import type React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, Mail, UserRound } from "lucide-react";
+import { LoaderCircle, Lock, Mail, UserRound } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { buildAuthConfirmRedirectUrl } from "@/lib/auth/redirect";
 import { createClient } from "@/lib/supabase/browser";
 
 type AuthMode = "sign-in" | "sign-up";
+type AuthAction = "credentials" | "google" | null;
 
 export function AuthForm({ initialError }: { initialError?: string | null }) {
   const router = useRouter();
@@ -18,26 +20,27 @@ export function AuthForm({ initialError }: { initialError?: string | null }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loadingAction, setLoadingAction] = useState<AuthAction>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const isSignUp = mode === "sign-up";
+  const loading = loadingAction !== null;
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setLoading(true);
+    setLoadingAction("credentials");
     setError(null);
     setMessage(null);
 
     if (password.length < 8) {
-      setLoading(false);
+      setLoadingAction(null);
       setError("Use at least 8 characters for your password.");
       return;
     }
 
     if (isSignUp && password !== confirmPassword) {
-      setLoading(false);
+      setLoadingAction(null);
       setError("Passwords do not match.");
       return;
     }
@@ -55,7 +58,7 @@ export function AuthForm({ initialError }: { initialError?: string | null }) {
         },
       });
 
-      setLoading(false);
+      setLoadingAction(null);
       if (authError) {
         setError(authError.message);
         return;
@@ -76,7 +79,7 @@ export function AuthForm({ initialError }: { initialError?: string | null }) {
       password,
     });
 
-    setLoading(false);
+    setLoadingAction(null);
     if (authError) {
       setError(authError.message);
       return;
@@ -84,6 +87,31 @@ export function AuthForm({ initialError }: { initialError?: string | null }) {
 
     router.push("/app");
     router.refresh();
+  }
+
+  async function continueWithGoogle() {
+    setLoadingAction("google");
+    setError(null);
+    setMessage(null);
+
+    try {
+      const supabase = createClient();
+      const redirectTo = buildAuthConfirmRedirectUrl(getAppUrl(), isSignUp ? "/app/setup" : "/app");
+      const { error: authError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+        },
+      });
+
+      if (authError) {
+        setLoadingAction(null);
+        setError(authError.message);
+      }
+    } catch {
+      setLoadingAction(null);
+      setError("Google sign-in is unavailable until NEXT_PUBLIC_APP_URL is configured.");
+    }
   }
 
   return (
@@ -131,7 +159,20 @@ export function AuthForm({ initialError }: { initialError?: string | null }) {
           </Button>
         </div>
 
-        <form className="space-y-4" onSubmit={submit}>
+        <div className="space-y-4">
+          <Button type="button" variant="outline" className="h-11 w-full bg-background" onClick={continueWithGoogle} disabled={loading}>
+            {loadingAction === "google" ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <GoogleMark />}
+            {loadingAction === "google" ? "Redirecting..." : isSignUp ? "Sign up with Google" : "Continue with Google"}
+          </Button>
+
+          <div className="flex items-center gap-3 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+            <span className="h-px flex-1 bg-border" />
+            <span>Or use email</span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+        </div>
+
+        <form className="mt-4 space-y-4" onSubmit={submit}>
           <div>
             <label htmlFor="email" className="mb-2 block text-sm font-medium text-muted-foreground">
               Email
@@ -192,7 +233,7 @@ export function AuthForm({ initialError }: { initialError?: string | null }) {
           ) : null}
 
           <Button className="h-11 w-full" disabled={loading}>
-            {loading ? "Working..." : isSignUp ? "Create account" : "Log In"}
+            {loadingAction === "credentials" ? "Working..." : isSignUp ? "Create account" : "Log In"}
           </Button>
 
           {message ? <Alert className="border-success/30 text-success">{message}</Alert> : null}
@@ -200,5 +241,20 @@ export function AuthForm({ initialError }: { initialError?: string | null }) {
         </form>
       </CardContent>
     </Card>
+  );
+}
+
+function getAppUrl() {
+  return process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
+}
+
+function GoogleMark() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4">
+      <path fill="#4285F4" d="M21.82 12.23c0-.72-.06-1.25-.2-1.8H12.2v3.56h5.53c-.11.88-.68 2.2-1.93 3.1l-.02.12 2.82 2.14.2.02c1.86-1.68 3.02-4.15 3.02-7.14Z" />
+      <path fill="#34A853" d="M12.2 21.91c2.71 0 4.98-.87 6.64-2.37l-3-2.28c-.8.55-1.88.94-3.64.94-2.66 0-4.92-1.72-5.73-4.1l-.12.01-2.93 2.22-.04.11c1.64 3.16 4.98 5.47 8.82 5.47Z" />
+      <path fill="#FBBC05" d="M6.47 14.1A5.78 5.78 0 0 1 6.13 12c0-.73.13-1.43.33-2.1l-.01-.14-2.97-2.26-.1.04A9.76 9.76 0 0 0 2.31 12c0 1.58.38 3.08 1.07 4.45l3.09-2.35Z" />
+      <path fill="#EA4335" d="M12.2 5.8c2.22 0 3.71.94 4.57 1.72l3.33-3.17C17.17 1.7 14.9.09 12.2.09c-3.84 0-7.18 2.31-8.82 5.45l3.08 2.36c.82-2.38 3.08-4.1 5.74-4.1Z" />
+    </svg>
   );
 }
