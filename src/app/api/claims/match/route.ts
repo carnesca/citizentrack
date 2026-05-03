@@ -3,11 +3,13 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 
 const ClaimSchema = z.object({
+  claim_mode: z.enum(["identifier", "blank_identity"]).default("identifier"),
+  identifier: z.string().optional().nullable(),
   law_type_id: z.string().min(1),
   submission_country: z.string().optional().nullable(),
   handling_office: z.string().optional().nullable(),
   application_method: z.string().optional().nullable(),
-  submitted_on: z.string().min(1),
+  submitted_on: z.string().optional().nullable(),
   aktenzeichen_on: z.string().optional().nullable(),
   certificate_received_on: z.string().optional().nullable(),
   aktenzeichen_not_received: z.boolean().optional(),
@@ -30,9 +32,25 @@ export async function POST(request: NextRequest) {
   }
 
   const claim = parsed.data;
-  const { data: applicationId, error } = await supabase.rpc("claim_citizenship_case", {
+  const identifier = blankToNull(claim.identifier);
+
+  if (claim.claim_mode === "identifier") {
+    if (!identifier) return NextResponse.json({ error: "Enter the spreadsheet username, name, ID, or post URL." }, { status: 400 });
+
+    const { data: applicationId, error } = await supabase.rpc("claim_citizenship_case_by_identifier", {
+      p_identifier: identifier,
+    });
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 409 });
+    return NextResponse.json({ application_id: applicationId });
+  }
+
+  const submittedOn = blankToNull(claim.submitted_on);
+  if (!submittedOn) return NextResponse.json({ error: "Submission date is required for blank spreadsheet rows." }, { status: 400 });
+
+  const { data: applicationId, error } = await supabase.rpc("claim_blank_citizenship_case", {
     p_law_type_id: claim.law_type_id,
-    p_submitted_on: claim.submitted_on,
+    p_submitted_on: submittedOn,
     p_submission_country: blankToNull(claim.submission_country),
     p_handling_office: blankToNull(claim.handling_office),
     p_application_method: blankToNull(claim.application_method),
