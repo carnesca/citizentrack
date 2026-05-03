@@ -1,10 +1,10 @@
 {
-  "name": "ciitzentracker",
+  "name": "citizentrack",
   "version": "0.1.0",
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/chris/ciitzentracker.git"
+    "url": "https://github.com/carnesca/citizentrack.git"
   },
   "scripts": {
     "dev": "next dev",

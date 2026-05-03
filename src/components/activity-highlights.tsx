@@ -41,29 +41,14 @@ export function ActivityHighlights({
             </p>
           </div>
 
-          <div className="grid gap-3 border-t border-border pt-4 sm:grid-cols-3">
-            <Metric
-              label={latestActivityDayLabel(highlights.latest_application_activity_on)}
-              value={`${formatCount(highlights.applications_added_on_latest_activity_day ?? 0)} added`}
+          <div className="grid gap-3 border-t border-border pt-4 sm:grid-cols-2">
+            <ActivityStat
+              label="Added Last 7 Days"
+              value={formatCount(highlights.applications_added_last_7_days ?? 0)}
             />
-            <Metric
-              label="Updated that day"
-              value={formatCount(highlights.applications_updated_on_latest_activity_day ?? 0)}
-            />
-            <Metric
-              label="Updated last 7 days"
+            <ActivityStat
+              label="Updated Last 7 Days"
               value={formatCount(highlights.applications_updated_last_7_days ?? 0)}
-            />
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <ActivityStat
-              label="Updated in last 30 days"
-              value={formatCount(highlights.applications_updated_last_30_days ?? 0)}
-            />
-            <ActivityStat
-              label="Active in last 30 days"
-              value={formatCount(highlights.applications_active_last_30_days ?? highlights.applications_added_last_30_days)}
             />
           </div>
         </CardContent>
@@ -135,18 +120,6 @@ function formatDateTime(value: string | null) {
   if (!value) return "No activity yet";
   return new Date(value).toLocaleDateString("en-US", {
     year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function latestActivityDayLabel(value: string | null | undefined) {
-  if (!value) return "Added that day";
-  return `Added ${formatShortDate(value)}`;
-}
-
-function formatShortDate(value: string) {
-  return new Date(value).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
   });
