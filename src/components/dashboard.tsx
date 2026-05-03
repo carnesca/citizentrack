@@ -22,12 +22,12 @@ export function Dashboard({ stats }: DashboardProps) {
 
       <ActivityHighlights highlights={stats.activity_highlights} />
 
-      <ApprovalQueueChart stats={stats.approval_queue_stats} />
-
       <div className="grid gap-6 lg:grid-cols-2">
         <TimelineStats laws={stats.law_type_stats} />
         <TrendsChart trends={stats.monthly_trends} />
       </div>
+
+      <ApprovalQueueChart stats={stats.approval_queue_stats} laws={stats.law_type_stats} />
     </div>
   );
 }

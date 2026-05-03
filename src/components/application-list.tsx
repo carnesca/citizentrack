@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CalendarClock, FilePenLine, FilePlus2, Search, Sparkles } from "lucide-react";
+import { CalendarClock, FilePenLine, FilePlus2, Search, Sparkles, Trash2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,8 +11,12 @@ import { createClient } from "@/lib/supabase/browser";
 import type { CitizenshipApplication } from "@/lib/types";
 
 export function ApplicationList() {
+  const router = useRouter();
   const [applications, setApplications] = useState<CitizenshipApplication[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -24,6 +29,25 @@ export function ApplicationList() {
         setLoading(false);
       });
   }, []);
+
+  async function deleteApplication(application: CitizenshipApplication) {
+    setDeletingId(application.id);
+    setDeleteError(null);
+
+    const response = await fetch(`/api/applications/${application.id}`, { method: "DELETE" });
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
+
+    if (!response.ok) {
+      setDeleteError(result?.error ?? "Could not delete application.");
+      setDeletingId(null);
+      return;
+    }
+
+    setApplications((current) => current.filter((item) => item.id !== application.id));
+    setConfirmDeleteId(null);
+    setDeletingId(null);
+    router.refresh();
+  }
 
   return (
     <Card className="gap-3 py-4">
@@ -47,6 +71,11 @@ export function ApplicationList() {
       </CardHeader>
       <CardContent className="px-4 sm:px-5">
         {loading ? <p className="text-sm text-muted">Loading your applications...</p> : null}
+        {deleteError ? (
+          <div className="mb-3 rounded-md border border-destructive/25 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {deleteError}
+          </div>
+        ) : null}
         {!loading && applications.length === 0 ? (
           <div className="py-5 text-center">
             <p className="text-muted">No private applications yet.</p>
@@ -70,16 +99,55 @@ export function ApplicationList() {
               </div>
 
               <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
-                <Link href={`/app/application?id=${application.id}`} className="min-w-0">
-                  <Button variant="ghost" size="sm" className="w-full text-primary sm:w-auto">
-                    <FilePenLine className="h-4 w-4" /> Update
-                  </Button>
-                </Link>
-                <Link href={`/app/estimate?application=${application.id}`} className="min-w-0">
-                  <Button size="sm" className="w-full sm:w-auto">
-                    <Sparkles className="h-4 w-4" /> Estimate
-                  </Button>
-                </Link>
+                {confirmDeleteId === application.id ? (
+                  <>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                      disabled={deletingId === application.id}
+                      onClick={() => deleteApplication(application)}
+                    >
+                      <Trash2 className="h-4 w-4" /> {deletingId === application.id ? "Deleting..." : "Delete"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                      disabled={deletingId === application.id}
+                      onClick={() => setConfirmDeleteId(null)}
+                    >
+                      <X className="h-4 w-4" /> Cancel
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Link href={`/app/application?id=${application.id}`} className="min-w-0">
+                      <Button variant="ghost" size="sm" className="w-full text-primary sm:w-auto">
+                        <FilePenLine className="h-4 w-4" /> Update
+                      </Button>
+                    </Link>
+                    <Link href={`/app/estimate?application=${application.id}`} className="min-w-0">
+                      <Button size="sm" className="w-full sm:w-auto">
+                        <Sparkles className="h-4 w-4" /> Estimate
+                      </Button>
+                    </Link>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="col-span-2 w-full text-destructive hover:bg-destructive/10 sm:col-span-1 sm:w-auto"
+                      onClick={() => {
+                        setDeleteError(null);
+                        setConfirmDeleteId(application.id);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" /> Delete
+                    </Button>
+                  </>
+                )}
               </div>
             </article>
           ))}

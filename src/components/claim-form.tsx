@@ -122,7 +122,7 @@ export function ClaimForm() {
               ].join(" ")}
               onClick={() => setForm({ ...form, claim_mode: "identifier" })}
             >
-              <span className="block text-sm font-semibold">I have a spreadsheet name, username, ID, or post URL</span>
+              <span className="block text-sm font-semibold">I have a spreadsheet name, username or ID</span>
               <span className="mt-1 block text-sm leading-5">Fastest option. Enter the value from your legacy spreadsheet row.</span>
             </button>
             <button
@@ -143,17 +143,17 @@ export function ClaimForm() {
           {form.claim_mode === "identifier" ? (
             <div className="grid gap-5">
               <label className="block">
-                <span className="mb-2 block text-sm font-medium text-muted">Spreadsheet name, username, ID, or post URL</span>
+                <span className="mb-2 block text-sm font-medium text-muted">Spreadsheet name, username, or ID</span>
                 <Input
                   value={form.identifier}
                   onChange={(event) => setForm({ ...form, identifier: event.target.value })}
-                  placeholder="u/username, display name, row ID, or https://..."
+                  placeholder="u/username, display name, or row ID"
                   required
                 />
               </label>
               <Alert>
                 Use the value exactly as it appeared in the legacy spreadsheet if you can. Reddit forms like
-                <span className="font-mono"> u/example</span>, names, short post URLs, and spreadsheet row IDs are supported.
+                <span className="font-mono"> u/example</span>, names, and spreadsheet row IDs are supported.
               </Alert>
             </div>
           ) : (
