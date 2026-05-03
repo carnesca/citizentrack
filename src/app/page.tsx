@@ -10,9 +10,11 @@ export default async function Home() {
   const stats = await getDashboardStats();
 
   return (
-    <main className="app-grid min-h-screen">
+    <main className="app-grid flex min-h-screen flex-col">
       <TopNav />
-      <Dashboard stats={stats} />
+      <div className="flex-1">
+        <Dashboard stats={stats} />
+      </div>
       <SiteFooter />
     </main>
   );
