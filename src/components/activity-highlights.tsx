@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, PlusCircle } from "lucide-react";
+import { ArrowDownRight, ArrowRight, ArrowUpRight, CheckCircle2, PlusCircle } from "lucide-react";
 import type { DashboardActivityHighlights } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -102,9 +102,20 @@ function Metric({ label, value, trend }: { label: string; value: string; trend?:
   return (
     <div className="min-w-0">
       <p className="text-xs font-medium leading-5 text-muted-foreground">{label}</p>
-      <p className="mt-1 font-mono text-lg font-semibold text-foreground">{value}</p>
-      {trend ? <p className={`mt-1 text-xs font-medium ${trendClassName(trend)}`}>{toTrendLabel(trend)}</p> : null}
+      <div className="mt-1 flex items-center gap-1.5">
+        <p className="font-mono text-lg font-semibold text-foreground">{value}</p>
+        {trend ? <TrendIcon trend={trend} /> : null}
+      </div>
     </div>
+  );
+}
+
+function TrendIcon({ trend }: { trend: Trend }) {
+  const Icon = trend === "increasing" ? ArrowUpRight : trend === "decreasing" ? ArrowDownRight : ArrowRight;
+  return (
+    <span className={trendClassName(trend)} aria-label={toTrendLabel(trend)} title={toTrendLabel(trend)}>
+      <Icon className="h-4 w-4" />
+    </span>
   );
 }
 
