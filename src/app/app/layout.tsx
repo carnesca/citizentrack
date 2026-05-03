@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
+import { SiteFooter } from "@/components/site-footer";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
@@ -11,9 +12,10 @@ export default async function AuthenticatedLayout({ children }: { children: Reac
   if (!user) redirect("/login");
 
   return (
-    <main className="app-grid min-h-screen">
+    <main className="app-grid flex min-h-screen flex-col">
       <AppHeader />
-      {children}
+      <div className="flex-1">{children}</div>
+      <SiteFooter />
     </main>
   );
 }
