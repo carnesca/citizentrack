@@ -11,6 +11,7 @@ The app is built as an installable PWA with a public dashboard and authenticated
 - Private application tracking for user-owned cases.
 - Claim flow for matching legacy spreadsheet entries without double-counting.
 - AI-assisted timeline estimate backed by deterministic aggregate statistics.
+- Weekly anonymized public data exports as JSON and CSV.
 - Light and dark themes.
 - Installable PWA metadata for mobile browsers.
 
@@ -57,6 +58,16 @@ Open [http://localhost:3000](http://localhost:3000).
 | `SUPABASE_SERVICE_ROLE_KEY` | Yes for server matching and AI cache writes | Supabase service role key. Never expose this client-side. |
 | `OPENAI_API_KEY` | Optional | Enables AI-written estimate explanations. Without it, deterministic fallback estimates are returned. |
 | `OPENAI_MODEL` | Optional | Defaults to `gpt-4.1-mini`. |
+
+## Public Data Exports
+
+CitizenTrack publishes anonymized application exports weekly through a Netlify scheduled function.
+
+- Latest JSON: https://mxkmpiatovfmtmnicaur.supabase.co/storage/v1/object/public/public-exports/applications/latest.json
+- Latest CSV: https://mxkmpiatovfmtmnicaur.supabase.co/storage/v1/object/public/public-exports/applications/latest.csv
+- Dated snapshots are written under `applications/snapshots/YYYY-MM-DD.json` and `applications/snapshots/YYYY-MM-DD.csv`.
+
+The export includes application timeline fields, source metadata, status, law type, country/office/method, calculated durations, and application create/update timestamps. It excludes Supabase user IDs, applicant labels, comments, emails, auth data, and raw free-text date fields.
 
 ## Scripts
 
