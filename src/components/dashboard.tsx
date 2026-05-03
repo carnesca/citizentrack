@@ -2,6 +2,7 @@
 
 import type { DashboardStats } from "@/lib/types";
 import { ActivityHighlights } from "@/components/activity-highlights";
+import { ApprovalQueueChart } from "@/components/approval-queue-chart";
 import { StatsCards } from "@/components/stats-cards";
 import { TimelineStats } from "@/components/timeline-stats";
 import { TrendsChart } from "@/components/trends-chart";
@@ -20,6 +21,8 @@ export function Dashboard({ stats }: DashboardProps) {
       <StatsCards stats={stats} />
 
       <ActivityHighlights highlights={stats.activity_highlights} />
+
+      <ApprovalQueueChart stats={stats.approval_queue_stats} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <TimelineStats laws={stats.law_type_stats} />

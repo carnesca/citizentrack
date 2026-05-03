@@ -24,8 +24,35 @@ export type DashboardStats = {
   rejected_applications: number;
   law_type_stats: LawTypeStat[];
   monthly_trends: MonthlyTrend[];
+  approval_queue_stats: ApprovalQueueStats | null;
   activity_highlights: DashboardActivityHighlights | null;
   refreshed_at: string;
+};
+
+export type ApprovalQueueStats = {
+  generated_at: string | null;
+  total_approved_with_submission_date: number;
+  newest_approved_submitted_on: string | null;
+  newest_approved_certificate_received_on: string | null;
+  newest_approved_submission_period_label: string | null;
+  median_submission_to_certificate_months: number | null;
+  cohorts: ApprovalQueueCohort[];
+};
+
+export type ApprovalQueueCohort = {
+  period_key: string;
+  period_label: string;
+  year_number: number;
+  month_number: number;
+  approved_count: number;
+  avg_submission_to_certificate_months: number | null;
+  min_submission_to_certificate_months: number | null;
+  max_submission_to_certificate_months: number | null;
+  latest_certificate_received_on: string | null;
+  law_type_breakdown?: Array<{
+    law_type_id: string;
+    approved_count: number;
+  }>;
 };
 
 export type DashboardActivityHighlights = {

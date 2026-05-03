@@ -8,6 +8,7 @@ const fallbackStats: DashboardStats = {
   rejected_applications: 0,
   law_type_stats: [],
   monthly_trends: [],
+  approval_queue_stats: null,
   activity_highlights: null,
   refreshed_at: new Date(0).toISOString(),
 };
@@ -40,6 +41,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     rejected_applications: data.rejected_applications,
     law_type_stats: data.law_type_stats ?? [],
     monthly_trends: data.monthly_trends ?? [],
+    approval_queue_stats: data.approval_queue_stats ?? null,
     activity_highlights: data.activity_highlights ?? null,
     refreshed_at: data.refreshed_at,
   };
