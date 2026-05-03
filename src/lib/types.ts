@@ -31,8 +31,14 @@ export type DashboardStats = {
 export type DashboardActivityHighlights = {
   latest_application_added_at: string | null;
   latest_application_updated_at: string | null;
+  latest_application_activity_on?: string | null;
   latest_approval_recorded_on: string | null;
+  applications_added_on_latest_activity_day?: number;
+  applications_updated_on_latest_activity_day?: number;
   applications_added_last_30_days: number;
+  applications_updated_last_7_days?: number;
+  applications_updated_last_30_days?: number;
+  applications_active_last_30_days?: number;
   applications_approved_last_30_days: number;
   approved_cases_with_file_number_count: number;
   avg_approved_submission_to_file_months: number | null;

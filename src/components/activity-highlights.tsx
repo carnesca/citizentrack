@@ -31,10 +31,41 @@ export function ActivityHighlights({
             </Badge>
           </div>
         </CardHeader>
-        <CardContent>
-          <p className="font-mono text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-            {formatDateTime(highlights.latest_application_added_at)}
-          </p>
+        <CardContent className="space-y-4">
+          <div>
+            <p className="font-mono text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+              {formatDateTime(highlights.latest_application_added_at)}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Latest update: {formatDateTime(highlights.latest_application_updated_at)}
+            </p>
+          </div>
+
+          <div className="grid gap-3 border-t border-border pt-4 sm:grid-cols-3">
+            <Metric
+              label={latestActivityDayLabel(highlights.latest_application_activity_on)}
+              value={`${formatCount(highlights.applications_added_on_latest_activity_day ?? 0)} added`}
+            />
+            <Metric
+              label="Updated that day"
+              value={formatCount(highlights.applications_updated_on_latest_activity_day ?? 0)}
+            />
+            <Metric
+              label="Updated last 7 days"
+              value={formatCount(highlights.applications_updated_last_7_days ?? 0)}
+            />
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <ActivityStat
+              label="Updated in last 30 days"
+              value={formatCount(highlights.applications_updated_last_30_days ?? 0)}
+            />
+            <ActivityStat
+              label="Active in last 30 days"
+              value={formatCount(highlights.applications_active_last_30_days ?? highlights.applications_added_last_30_days)}
+            />
+          </div>
         </CardContent>
       </Card>
 
@@ -82,6 +113,15 @@ function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
+function ActivityStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md bg-secondary/55 px-3 py-2">
+      <p className="text-xs font-medium leading-5 text-muted-foreground">{label}</p>
+      <p className="mt-1 font-mono text-lg font-semibold text-foreground">{value}</p>
+    </div>
+  );
+}
+
 function formatDate(value: string | null) {
   if (!value) return "No approvals yet";
   return new Date(value).toLocaleDateString("en-US", {
@@ -95,6 +135,18 @@ function formatDateTime(value: string | null) {
   if (!value) return "No activity yet";
   return new Date(value).toLocaleDateString("en-US", {
     year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function latestActivityDayLabel(value: string | null | undefined) {
+  if (!value) return "Added that day";
+  return `Added ${formatShortDate(value)}`;
+}
+
+function formatShortDate(value: string) {
+  return new Date(value).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
   });
