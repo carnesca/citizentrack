@@ -1,0 +1,13 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NEXT_PUBLIC_SUPABASE_URL = "https://mxkmpiatovfmtmnicaur.supabase.co"
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_oLCN05gjp7ZgegNA1yt7aQ_qZYWAtWZ"
+  NEXT_PUBLIC_APP_URL = "https://citizen-track.netlify.app"
+  OPENAI_MODEL = "gpt-4.1-mini"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

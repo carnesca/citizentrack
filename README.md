@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CitizenTrack
+
+CitizenTrack is an open-source web app for tracking German citizenship application timelines, contributing anonymized community data, and viewing aggregate processing statistics.
+
+The app is built as an installable PWA with a public dashboard and authenticated user workspace.
+
+## Features
+
+- Public aggregate dashboard for application totals, approvals, processing times, and trends.
+- Email/password authentication with Supabase.
+- Private application tracking for user-owned cases.
+- Claim flow for matching legacy spreadsheet entries without double-counting.
+- AI-assisted timeline estimate backed by deterministic aggregate statistics.
+- Light and dark themes.
+- Installable PWA metadata for mobile browsers.
+
+## Tech Stack
+
+- Next.js App Router
+- React
+- TypeScript
+- Tailwind CSS
+- Supabase Auth and Postgres
+- Recharts
+- OpenAI API for optional estimate explanations
+- Netlify deployment
 
 ## Getting Started
 
-First, run the development server:
+Install dependencies:
+
+```bash
+npm install
+```
+
+Create a local environment file:
+
+```bash
+cp .env.example .env.local
+```
+
+Fill in the Supabase and OpenAI values in `.env.local`, then run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Required | Description |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL. |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Yes | Supabase publishable anon key. |
+| `NEXT_PUBLIC_APP_URL` | Yes | Public app URL for redirects and links. |
+| `NEXT_PUBLIC_GITHUB_REPO_URL` | No | GitHub repository URL used in the footer. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes for server matching and AI cache writes | Supabase service role key. Never expose this client-side. |
+| `OPENAI_API_KEY` | Optional | Enables AI-written estimate explanations. Without it, deterministic fallback estimates are returned. |
+| `OPENAI_MODEL` | Optional | Defaults to `gpt-4.1-mini`. |
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run dev
+npm run lint
+npm run build
+npm run start
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Contributing
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Pull requests are welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-## Deploy on Vercel
+All changes to the default branch should go through pull request review before merge.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## License
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+[MIT](./LICENSE)

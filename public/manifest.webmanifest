@@ -1,0 +1,18 @@
+{
+  "name": "CitizenTrack",
+  "short_name": "CitizenTrack",
+  "description": "Track German citizenship application timelines.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F2F5FA",
+  "theme_color": "#356EE8",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
