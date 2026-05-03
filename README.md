@@ -54,7 +54,6 @@ Open [http://localhost:3000](http://localhost:3000).
 | `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL. |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Yes | Supabase publishable anon key. |
 | `NEXT_PUBLIC_APP_URL` | Yes | Public app URL for redirects and links. |
-| `NEXT_PUBLIC_GITHUB_REPO_URL` | No | GitHub repository URL used in the footer. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Yes for server matching and AI cache writes | Supabase service role key. Never expose this client-side. |
 | `OPENAI_API_KEY` | Optional | Enables AI-written estimate explanations. Without it, deterministic fallback estimates are returned. |
 | `OPENAI_MODEL` | Optional | Defaults to `gpt-4.1-mini`. |
