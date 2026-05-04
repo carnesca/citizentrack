@@ -109,7 +109,11 @@ export function ApprovalQueueChart({ stats, laws }: { stats: ApprovalQueueStats 
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="grid gap-3 sm:grid-cols-2">
-          <QueueMetric label="Estimated BVA Queue Position" value={queuePosition} detail={queueBasis} />
+          <QueueMetric
+            label="Estimated BVA Queue Position"
+            value={queuePosition}
+            detail={queueBasis}
+          />
           <QueueMetric label="Recent Approvals Included" value={formatNumber(approvedCases)} detail={selectedLawName} />
         </div>
 
@@ -240,18 +244,69 @@ function getApprovedCount(cohort: ApprovalQueueCohort, lawTypeId: string) {
 function getQueuePosition(points: QueuePoint[]) {
   if (!points.length) return "n/a";
 
-  const peak = Math.max(...points.map((point) => point.approved_count));
-  const threshold = getQueueThreshold(peak);
-  const activeCluster = points.filter((point) => point.approved_count >= threshold);
-  const queuePoint = activeCluster[activeCluster.length - 1] ?? points.find((point) => point.approved_count === peak);
+  const totalApprovals = points.reduce((sum, point) => sum + point.approved_count, 0);
+  const majorityTarget = Math.floor(totalApprovals / 2) + 1;
+  const dominantWindow = getDominantApprovalWindow(points, majorityTarget);
 
-  return queuePoint?.period_label ?? "n/a";
+  return dominantWindow?.end.period_label ?? points[points.length - 1].period_label;
 }
 
-function getQueueThreshold(peak: number) {
-  if (peak >= 6) return Math.ceil(peak * 0.4);
-  if (peak >= 3) return 2;
-  return 1;
+function getDominantApprovalWindow(points: QueuePoint[], targetApprovals: number) {
+  let best:
+    | {
+        start: QueuePoint;
+        end: QueuePoint;
+        span: number;
+        approvals: number;
+      }
+    | null = null;
+
+  for (let startIndex = 0; startIndex < points.length; startIndex += 1) {
+    let approvals = 0;
+
+    for (let endIndex = startIndex; endIndex < points.length; endIndex += 1) {
+      approvals += points[endIndex].approved_count;
+      if (approvals < targetApprovals) continue;
+
+      const span = monthSpan(points[startIndex].period_key, points[endIndex].period_key);
+      const candidate = {
+        start: points[startIndex],
+        end: points[endIndex],
+        span: span ?? Number.MAX_SAFE_INTEGER,
+        approvals,
+      };
+
+      if (
+        !best ||
+        candidate.span < best.span ||
+        (candidate.span === best.span && candidate.approvals > best.approvals) ||
+        (candidate.span === best.span &&
+          candidate.approvals === best.approvals &&
+          candidate.end.period_key > best.end.period_key)
+      ) {
+        best = candidate;
+      }
+
+      break;
+    }
+  }
+
+  return best;
+}
+
+function monthSpan(startKey: string, endKey: string) {
+  const start = monthIndex(startKey);
+  const end = monthIndex(endKey);
+  if (start === null || end === null) return null;
+  return end - start;
+}
+
+function monthIndex(key: string) {
+  const [yearRaw, monthRaw] = key.split("-");
+  const year = Number(yearRaw);
+  const month = Number(monthRaw);
+  if (!Number.isFinite(year) || !Number.isFinite(month)) return null;
+  return year * 12 + month - 1;
 }
 
 function formatTick(value: string, mode: QueueMode) {
