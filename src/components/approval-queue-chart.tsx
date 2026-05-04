@@ -24,6 +24,8 @@ type QueuePoint = {
   approved_count: number;
 };
 
+const QUEUE_CHART_START_YEAR = 2021;
+
 export function ApprovalQueueChart({ stats, laws }: { stats: ApprovalQueueStats | null; laws: LawTypeStat[] }) {
   const [chartReady, setChartReady] = useState(false);
   const [mode, setMode] = useState<QueueMode>("month");
@@ -43,7 +45,7 @@ export function ApprovalQueueChart({ stats, laws }: { stats: ApprovalQueueStats 
     [stats?.cohorts, mode, selectedLawType],
   );
   const monthlyQueueData = useMemo(
-    () => aggregateCohorts(stats?.cohorts ?? [], "month", selectedLawType),
+    () => aggregateCohorts(stats?.cohorts ?? [], "month", selectedLawType).filter((point) => point.approved_count > 0),
     [stats?.cohorts, selectedLawType],
   );
   const queuePosition = useMemo(() => getQueuePosition(monthlyQueueData), [monthlyQueueData]);
@@ -195,14 +197,15 @@ function QueueMetric({ label, value, detail }: { label: string; value: string; d
 
 function aggregateCohorts(cohorts: ApprovalQueueCohort[], mode: QueueMode, lawTypeId: string): QueuePoint[] {
   if (mode === "month") {
-    return cohorts
+    const monthly = cohorts
       .map((cohort) => ({
         period_key: cohort.period_key,
         period_label: cohort.period_label,
         approved_count: getApprovedCount(cohort, lawTypeId),
       }))
-      .filter((point) => point.approved_count > 0)
       .sort((a, b) => a.period_key.localeCompare(b.period_key));
+
+    return fillMonthlyTimeline(monthly);
   }
 
   const yearly = new Map<number, QueuePoint>();
@@ -223,7 +226,51 @@ function aggregateCohorts(cohorts: ApprovalQueueCohort[], mode: QueueMode, lawTy
     yearly.set(cohort.year_number, existing);
   }
 
-  return Array.from(yearly.values()).sort((a, b) => a.period_key.localeCompare(b.period_key));
+  return fillYearlyTimeline(Array.from(yearly.values()).sort((a, b) => a.period_key.localeCompare(b.period_key)));
+}
+
+function fillMonthlyTimeline(points: QueuePoint[]) {
+  if (!points.length) return [];
+
+  const byKey = new Map(points.map((point) => [point.period_key, point]));
+  const startIndex = QUEUE_CHART_START_YEAR * 12;
+  const lastPointIndex = Math.max(...points.map((point) => monthIndex(point.period_key) ?? startIndex));
+  const endIndex = Math.max(startIndex, lastPointIndex);
+  const filled: QueuePoint[] = [];
+
+  for (let index = startIndex; index <= endIndex; index += 1) {
+    const key = monthKeyFromIndex(index);
+    filled.push(
+      byKey.get(key) ?? {
+        period_key: key,
+        period_label: formatMonthLabel(key),
+        approved_count: 0,
+      },
+    );
+  }
+
+  return filled;
+}
+
+function fillYearlyTimeline(points: QueuePoint[]) {
+  if (!points.length) return [];
+
+  const byKey = new Map(points.map((point) => [point.period_key, point]));
+  const maxYear = Math.max(...points.map((point) => Number(point.period_key)).filter(Number.isFinite));
+  const filled: QueuePoint[] = [];
+
+  for (let year = QUEUE_CHART_START_YEAR; year <= maxYear; year += 1) {
+    const key = String(year);
+    filled.push(
+      byKey.get(key) ?? {
+        period_key: key,
+        period_label: key,
+        approved_count: 0,
+      },
+    );
+  }
+
+  return filled;
 }
 
 function getApprovedCount(cohort: ApprovalQueueCohort, lawTypeId: string) {
@@ -307,6 +354,22 @@ function monthIndex(key: string) {
   const month = Number(monthRaw);
   if (!Number.isFinite(year) || !Number.isFinite(month)) return null;
   return year * 12 + month - 1;
+}
+
+function monthKeyFromIndex(index: number) {
+  const year = Math.floor(index / 12);
+  const month = (index % 12) + 1;
+  return `${year}-${String(month).padStart(2, "0")}`;
+}
+
+function formatMonthLabel(key: string) {
+  const date = new Date(`${key}-01T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) return key;
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(date);
 }
 
 function formatTick(value: string, mode: QueueMode) {
