@@ -44,20 +44,18 @@ export function ApprovalQueueChart({ stats, laws }: { stats: ApprovalQueueStats 
     () => aggregateCohorts(stats?.cohorts ?? [], mode, selectedLawType),
     [stats?.cohorts, mode, selectedLawType],
   );
-  const monthlyQueueData = useMemo(
-    () => aggregateCohorts(stats?.cohorts ?? [], "month", selectedLawType).filter((point) => point.approved_count > 0),
+  const queueEstimateData = useMemo(
+    () => getAllCohortPoints(stats?.cohorts ?? [], selectedLawType).filter((point) => point.approved_count > 0),
     [stats?.cohorts, selectedLawType],
   );
-  const queuePosition = useMemo(() => getQueuePosition(monthlyQueueData), [monthlyQueueData]);
+  const queuePosition = useMemo(() => getQueuePosition(queueEstimateData), [queueEstimateData]);
   const approvedCases = useMemo(
-    () => monthlyQueueData.reduce((total, point) => total + point.approved_count, 0),
-    [monthlyQueueData],
+    () => queueEstimateData.reduce((total, point) => total + point.approved_count, 0),
+    [queueEstimateData],
   );
   const selectedLawName =
     lawOptions.find((law) => law.law_type_id === selectedLawType)?.display_name ?? "All application types";
-  const queueBasis = stats?.recent_approval_window_label
-    ? `Based on approvals recorded ${stats.recent_approval_window_label}`
-    : "Based on approved cases with submission dates";
+  const queueBasis = "Based on all approved cases with submission dates, including imported spreadsheet rows";
 
   return (
     <Card className="border-border bg-card">
@@ -69,7 +67,7 @@ export function ApprovalQueueChart({ stats, laws }: { stats: ApprovalQueueStats 
               Approval Queue Position
             </CardTitle>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-              Where the BVA appears to be in the queue, based on submission months with a recent cluster of approvals.
+              Where the BVA appears to be in the queue, based on approved cases grouped by original submission month.
             </p>
           </div>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[18rem] sm:flex-row sm:items-center">
@@ -116,7 +114,7 @@ export function ApprovalQueueChart({ stats, laws }: { stats: ApprovalQueueStats 
             value={queuePosition}
             detail={queueBasis}
           />
-          <QueueMetric label="Recent Approvals Included" value={formatNumber(approvedCases)} detail={selectedLawName} />
+          <QueueMetric label="Approvals Included" value={formatNumber(approvedCases)} detail={selectedLawName} />
         </div>
 
         <div className="h-[18rem] w-full min-w-0 sm:h-[320px]">
@@ -150,7 +148,7 @@ export function ApprovalQueueChart({ stats, laws }: { stats: ApprovalQueueStats 
                     strokeWidth: 1,
                   }}
                   formatter={(value, name) => {
-                    if (name === "Recent approvals") return [formatNumber(Number(value)), name];
+                    if (name === "Approvals") return [formatNumber(Number(value)), name];
                     return [value, name];
                   }}
                   labelFormatter={(label) => `Submitted ${label}`}
@@ -165,7 +163,7 @@ export function ApprovalQueueChart({ stats, laws }: { stats: ApprovalQueueStats 
                 />
                 <Bar
                   dataKey="approved_count"
-                  name="Recent approvals"
+                  name="Approvals"
                   fill="var(--success)"
                   radius={[5, 5, 0, 0]}
                   activeBar={{ stroke: "var(--foreground)", strokeOpacity: 0.22, strokeWidth: 1 }}
@@ -197,15 +195,7 @@ function QueueMetric({ label, value, detail }: { label: string; value: string; d
 
 function aggregateCohorts(cohorts: ApprovalQueueCohort[], mode: QueueMode, lawTypeId: string): QueuePoint[] {
   if (mode === "month") {
-    const monthly = cohorts
-      .map((cohort) => ({
-        period_key: cohort.period_key,
-        period_label: cohort.period_label,
-        approved_count: getApprovedCount(cohort, lawTypeId),
-      }))
-      .sort((a, b) => a.period_key.localeCompare(b.period_key));
-
-    return fillMonthlyTimeline(monthly);
+    return fillMonthlyTimeline(getAllCohortPoints(cohorts, lawTypeId));
   }
 
   const yearly = new Map<number, QueuePoint>();
@@ -227,6 +217,16 @@ function aggregateCohorts(cohorts: ApprovalQueueCohort[], mode: QueueMode, lawTy
   }
 
   return fillYearlyTimeline(Array.from(yearly.values()).sort((a, b) => a.period_key.localeCompare(b.period_key)));
+}
+
+function getAllCohortPoints(cohorts: ApprovalQueueCohort[], lawTypeId: string) {
+  return cohorts
+    .map((cohort) => ({
+      period_key: cohort.period_key,
+      period_label: cohort.period_label,
+      approved_count: getApprovedCount(cohort, lawTypeId),
+    }))
+    .sort((a, b) => a.period_key.localeCompare(b.period_key));
 }
 
 function fillMonthlyTimeline(points: QueuePoint[]) {
@@ -274,18 +274,8 @@ function fillYearlyTimeline(points: QueuePoint[]) {
 }
 
 function getApprovedCount(cohort: ApprovalQueueCohort, lawTypeId: string) {
-  const hasRecentCounts = typeof cohort.recent_approved_count === "number";
-  const recentBreakdown = cohort.recent_law_type_breakdown;
-
-  if (!lawTypeId) return cohort.recent_approved_count ?? cohort.approved_count;
-  if (hasRecentCounts) {
-    return recentBreakdown?.find((law) => law.law_type_id === lawTypeId)?.approved_count ?? 0;
-  }
-
-  return (
-    cohort.law_type_breakdown?.find((law) => law.law_type_id === lawTypeId)?.approved_count ??
-    0
-  );
+  if (!lawTypeId) return cohort.approved_count;
+  return cohort.law_type_breakdown?.find((law) => law.law_type_id === lawTypeId)?.approved_count ?? 0;
 }
 
 function getQueuePosition(points: QueuePoint[]) {

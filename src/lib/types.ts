@@ -35,7 +35,6 @@ export type ApprovalQueueStats = {
   newest_approved_submitted_on: string | null;
   newest_approved_certificate_received_on: string | null;
   newest_approved_submission_period_label: string | null;
-  recent_approval_window_label?: string | null;
   median_submission_to_certificate_months: number | null;
   cohorts: ApprovalQueueCohort[];
 };
@@ -50,12 +49,7 @@ export type ApprovalQueueCohort = {
   min_submission_to_certificate_months: number | null;
   max_submission_to_certificate_months: number | null;
   latest_certificate_received_on: string | null;
-  recent_approved_count?: number;
   law_type_breakdown?: Array<{
-    law_type_id: string;
-    approved_count: number;
-  }>;
-  recent_law_type_breakdown?: Array<{
     law_type_id: string;
     approved_count: number;
   }>;
