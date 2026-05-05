@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Code2, FileJson, TableProperties } from "lucide-react";
+import { Code2, Coffee, FileJson, FileSpreadsheet } from "lucide-react";
 import { siteConfig } from "@/lib/site";
 
 export function SiteFooter() {
@@ -26,14 +26,14 @@ export function SiteFooter() {
               JSON
             </Link>
             <Link
-              href={siteConfig.publicDataCsvUrl}
+              href={siteConfig.publicDataXlsxUrl}
               target="_blank"
               rel="noreferrer"
-              aria-label="Open latest CitizenTrack public CSV export"
+              aria-label="Open latest CitizenTrack public Excel export"
               className="inline-flex w-fit items-center gap-2 rounded-md border border-border bg-secondary px-3 py-2 font-semibold text-foreground transition-colors hover:bg-accent"
             >
-              <TableProperties className="h-4 w-4" />
-              CSV
+              <FileSpreadsheet className="h-4 w-4" />
+              XLSX
             </Link>
             <Link
               href={siteConfig.githubUrl}
@@ -44,6 +44,16 @@ export function SiteFooter() {
             >
               <Code2 className="h-4 w-4" />
               GitHub
+            </Link>
+            <Link
+              href={siteConfig.buyMeCoffeeUrl}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Support CitizenTrack on Buy Me a Coffee"
+              className="inline-flex w-fit items-center gap-2 rounded-md border border-primary/30 bg-primary px-3 py-2 font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              <Coffee className="h-4 w-4" />
+              Buy Me a Coffee
             </Link>
           </div>
         </div>

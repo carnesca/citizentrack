@@ -202,8 +202,8 @@ export function ApplicationForm() {
             <Input value={form.application_method} onChange={(event) => set("application_method", event.target.value)} placeholder="Mail, online, in person" />
           </Field>
           <div className="lg:col-span-2">
-            <Field label="Private notes">
-              <Textarea value={form.comments} onChange={(event) => set("comments", event.target.value)} placeholder="Visible only to you." />
+            <Field label="Comments">
+              <Textarea value={form.comments} onChange={(event) => set("comments", event.target.value)} placeholder="E.g StaG5: German grandmother" />
             </Field>
           </div>
           {error ? <Alert className="border-danger/30 text-danger lg:col-span-2">{error}</Alert> : null}
