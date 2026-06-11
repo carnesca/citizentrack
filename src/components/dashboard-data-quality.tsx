@@ -28,7 +28,7 @@ export function DashboardDataQuality({
 }: DashboardDataQualityProps) {
   return (
     <div className={["flex flex-wrap gap-1.5 text-[0.68rem] leading-5 text-muted-foreground", className].filter(Boolean).join(" ")}>
-      <QualityChip icon={RefreshCw} label={`Refreshed: ${formatRefreshedAt(summary.refreshed_at)}`} />
+      <QualityChip icon={RefreshCw} label={`Refreshed: ${formatRefreshedAt(summary.refreshed_at)}`} title="Dashboard statistics refresh automatically from aggregate application data." />
       {summary.imported_spreadsheet_rows_included ? <QualityChip icon={FileSpreadsheet} label="Google Sheet with historical cases included" /> : null}
       {summary.user_rows_included ? <QualityChip icon={Rows3} label="User-submitted cases included" /> : null}
       <QualityChip icon={ShieldCheck} label={claimHandlingLabel(summary.claim_handling)} />
@@ -39,12 +39,14 @@ export function DashboardDataQuality({
 function QualityChip({
   icon: Icon,
   label,
+  title,
 }: {
   icon: LucideIcon;
   label: string;
+  title?: string;
 }) {
   return (
-    <span className="inline-flex max-w-full items-center gap-1 rounded-md border border-border bg-secondary/70 px-2 py-0.5">
+    <span title={title} className="inline-flex max-w-full items-center gap-1 rounded-md border border-border/70 bg-secondary/70 px-2 py-0.5">
       <Icon className="h-3 w-3 shrink-0" aria-hidden="true" />
       <span className="truncate">{label}</span>
     </span>

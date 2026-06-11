@@ -170,7 +170,16 @@ export function ClaimForm() {
       return;
     }
 
-    setMessage("Historical row copied into your private account.");
+    const applicationId = (result as { application_id?: string }).application_id;
+    let timelineWarning: string | null = null;
+    if (applicationId) {
+      const estimateError = await refreshTimelineEstimate(applicationId);
+      if (estimateError) {
+        timelineWarning = ` The timeline estimate will refresh after your next application update.`;
+      }
+    }
+
+    setMessage(`Historical row copied into your private account.${timelineWarning ?? ""}`);
     setTimeout(() => router.push("/app"), 700);
   }
 
@@ -400,4 +409,16 @@ function CheckboxRow({
       <span>{label}</span>
     </label>
   );
+}
+
+async function refreshTimelineEstimate(applicationId: string) {
+  const response = await fetch("/api/ai/timeline", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ application_id: applicationId }),
+  });
+
+  if (response.ok) return null;
+  const result = (await response.json().catch(() => null)) as { error?: string } | null;
+  return result?.error ?? "Unknown error";
 }
