@@ -36,6 +36,6 @@ export function getLatestBvaStag5Stats() {
     ...latest,
     inventoryToCompletionYears: Math.round(inventoryToCompletionYears * 10) / 10,
     inventoryToCompletionMonths: Math.round(inventoryToCompletionYears * 12),
-    sourceLabel: "BVA StAG §5 processing statistics, 2022-2024",
+    sourceLabel: "BVA StAG 5 processing statistics, 2022-2024",
   };
 }

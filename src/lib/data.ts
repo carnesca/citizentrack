@@ -1,5 +1,6 @@
 import { createClient as createPublicClient } from "@supabase/supabase-js";
-import type { DashboardStats } from "@/lib/types";
+import type { DashboardActivityHighlights, DashboardStats, LawTypeStat } from "@/lib/types";
+import { lawTypeLabel } from "@/lib/utils";
 
 const fallbackStats: DashboardStats = {
   total_applications: 0,
@@ -39,10 +40,37 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     pending_applications: data.pending_applications,
     approved_applications: data.approved_applications,
     rejected_applications: data.rejected_applications,
-    law_type_stats: data.law_type_stats ?? [],
+    law_type_stats: normalizeLawTypeStats((data.law_type_stats ?? []) as LawTypeStat[]),
     monthly_trends: data.monthly_trends ?? [],
     approval_queue_stats: data.approval_queue_stats ?? null,
-    activity_highlights: data.activity_highlights ?? null,
+    activity_highlights: normalizeActivityHighlights(data.activity_highlights as DashboardActivityHighlights | null),
     refreshed_at: data.refreshed_at,
+  };
+}
+
+function normalizeLawTypeStats(laws: LawTypeStat[]) {
+  return laws.map((law) => ({
+    ...law,
+    display_name: lawTypeLabel(law.display_name),
+  }));
+}
+
+function normalizeActivityHighlights(highlights: DashboardActivityHighlights | null) {
+  if (!highlights) return null;
+
+  return {
+    ...highlights,
+    most_active_application_law_type: highlights.most_active_application_law_type
+      ? {
+          ...highlights.most_active_application_law_type,
+          display_name: lawTypeLabel(highlights.most_active_application_law_type.display_name),
+        }
+      : highlights.most_active_application_law_type,
+    most_active_approved_law_type: highlights.most_active_approved_law_type
+      ? {
+          ...highlights.most_active_approved_law_type,
+          display_name: lawTypeLabel(highlights.most_active_approved_law_type.display_name),
+        }
+      : highlights.most_active_approved_law_type,
   };
 }

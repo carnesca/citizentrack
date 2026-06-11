@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/browser";
 import type { CitizenshipApplication } from "@/lib/types";
+import { lawTypeLabel } from "@/lib/utils";
 
 export function ApplicationList() {
   const router = useRouter();
@@ -171,13 +172,17 @@ function statusLabel(status: CitizenshipApplication["status"]) {
 }
 
 function lawLabel(value: string) {
-  return value
+  const normalized = lawTypeLabel(value);
+  if (normalized !== value) return normalized;
+
+  return normalized
     .replace("stag_10", "StAG 10")
     .replace("stag_14", "StAG 14")
     .replace("stag_15", "StAG 15")
-    .replace("5_stag_erklarung", "5 StAG Erklarung")
     .replace("artikel_116", "Artikel 116")
-    .replaceAll("_", " ");
+    .replaceAll("_", " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function formatDate(value: string | null) {

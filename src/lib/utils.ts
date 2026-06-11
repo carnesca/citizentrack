@@ -14,6 +14,24 @@ export function formatMonths(value: number | null | undefined) {
   return `${Math.round(value)} mo`;
 }
 
+export function lawTypeLabel(value: string | null | undefined) {
+  if (!value) return "Unknown";
+  const normalized = value.trim().toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
+  if (
+    normalized === "5 stag erklarung" ||
+    normalized === "5 stag erklärung" ||
+    normalized === "5 stag declaration" ||
+    normalized === "stag §5" ||
+    normalized === "stag 5" ||
+    normalized === "stag5" ||
+    normalized === "5 stag" ||
+    normalized === "§5 stag"
+  ) {
+    return "StAG 5";
+  }
+  return value;
+}
+
 export function toPercent(part: number, total: number) {
   if (!total) return 0;
   return Math.max(4, Math.min(100, Math.round((part / total) * 100)));

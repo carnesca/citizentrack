@@ -31,7 +31,11 @@ type TrendPoint = {
   approvalsTrend?: number;
 };
 
-export function TrendsChart({ trends }: { trends: MonthlyTrend[] }) {
+export function TrendsChart({
+  trends,
+}: {
+  trends: MonthlyTrend[];
+}) {
   const [chartReady, setChartReady] = useState(false);
   const [mode, setMode] = useState<TrendMode>("year");
   const [view, setView] = useState<TrendView>("chart");

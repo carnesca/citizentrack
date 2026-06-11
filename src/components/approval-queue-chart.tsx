@@ -26,7 +26,13 @@ type QueuePoint = {
 
 const QUEUE_CHART_START_YEAR = 2021;
 
-export function ApprovalQueueChart({ stats, laws }: { stats: ApprovalQueueStats | null; laws: LawTypeStat[] }) {
+export function ApprovalQueueChart({
+  stats,
+  laws,
+}: {
+  stats: ApprovalQueueStats | null;
+  laws: LawTypeStat[];
+}) {
   const [chartReady, setChartReady] = useState(false);
   const [mode, setMode] = useState<QueueMode>("month");
   const [selectedLawType, setSelectedLawType] = useState("");
@@ -55,7 +61,8 @@ export function ApprovalQueueChart({ stats, laws }: { stats: ApprovalQueueStats 
   );
   const selectedLawName =
     lawOptions.find((law) => law.law_type_id === selectedLawType)?.display_name ?? "All application types";
-  const queueBasis = "Based on all approved cases with submission dates, including imported spreadsheet rows";
+  const queueBasis =
+    "Estimates submitted month/year cohorts showing approval activity, not your individual place in line. Based on all approved cases with submission and certificate dates; chart display starts at 2021.";
 
   return (
     <Card className="border-border bg-card">
@@ -64,17 +71,17 @@ export function ApprovalQueueChart({ stats, laws }: { stats: ApprovalQueueStats 
           <div>
             <CardTitle className="flex items-center gap-2 text-lg font-semibold text-foreground">
               <CheckCheck className="h-5 w-5 text-success" />
-              Approval Queue Position
+              Estimated Active Submission Cohort
             </CardTitle>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-              Where the BVA appears to be in the queue, based on approved cases grouped by original submission month.
+              Estimates which submitted month/year cohorts are showing BVA approval activity, based on approved cases grouped by original submission date.
             </p>
           </div>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[18rem] sm:flex-row sm:items-center">
             <Select
               value={selectedLawType}
               onChange={(event) => setSelectedLawType(event.target.value)}
-              aria-label="Filter approval queue by application type"
+              aria-label="Filter active submission cohort estimate by application type"
               className="h-9 min-w-0 sm:w-[13rem]"
             >
               <option value="">All application types</option>
@@ -110,7 +117,7 @@ export function ApprovalQueueChart({ stats, laws }: { stats: ApprovalQueueStats 
       <CardContent className="space-y-5">
         <div className="grid gap-3 sm:grid-cols-2">
           <QueueMetric
-            label="Estimated BVA Queue Position"
+            label="Estimated Active Submission Cohort"
             value={queuePosition}
             detail={queueBasis}
           />

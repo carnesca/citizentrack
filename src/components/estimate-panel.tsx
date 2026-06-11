@@ -7,22 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/browser";
-import type { CitizenshipApplication } from "@/lib/types";
-
-type Prediction = {
-  predicted_next_milestone: string;
-  date_range_start: string | null;
-  date_range_end: string | null;
-  confidence: "low" | "medium" | "high";
-  similar_cases_count: number;
-  basis: string;
-  caveats: string;
-};
+import type { CitizenshipApplication, TimelinePrediction, TimelinePredictionMetadata } from "@/lib/types";
+import { lawTypeLabel } from "@/lib/utils";
 
 export function EstimatePanel({ initialApplicationId }: { initialApplicationId?: string }) {
   const [applications, setApplications] = useState<CitizenshipApplication[]>([]);
   const [applicationId, setApplicationId] = useState(initialApplicationId ?? "");
-  const [prediction, setPrediction] = useState<Prediction | null>(null);
+  const [prediction, setPrediction] = useState<TimelinePrediction | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -70,7 +61,7 @@ export function EstimatePanel({ initialApplicationId }: { initialApplicationId?:
           <Select value={applicationId} onChange={(event) => setApplicationId(event.target.value)}>
             {applications.map((application) => (
               <option key={application.id} value={application.id}>
-                {application.law_type_id.replaceAll("_", " ")} - submitted {application.submitted_on ?? "unknown"}
+                {lawTypeLabel(application.law_type_id)} - submitted {application.submitted_on ?? "unknown"}
               </option>
             ))}
           </Select>
@@ -87,6 +78,7 @@ export function EstimatePanel({ initialApplicationId }: { initialApplicationId?:
               end={prediction.date_range_end}
               confidence={prediction.confidence}
               comparableCases={prediction.similar_cases_count}
+              metadata={prediction.metadata}
             />
           </div>
         ) : null}
@@ -101,12 +93,14 @@ function EstimateWindow({
   end,
   confidence,
   comparableCases,
+  metadata,
 }: {
   milestone: string;
   start: string | null;
   end: string | null;
-  confidence: Prediction["confidence"];
+  confidence: TimelinePrediction["confidence"];
   comparableCases: number;
+  metadata: TimelinePredictionMetadata;
 }) {
   const range = getWindowRange(start, end);
   const title = getForecastTitle(milestone);
@@ -123,6 +117,7 @@ function EstimateWindow({
           <p className="mt-2 text-sm text-muted-foreground">There is not enough date information to visualize this forecast yet.</p>
         </div>
         <ForecastFacts confidence={confidence} windowLabel="Not Available" comparableCases={comparableCases} />
+        <EstimateMetadata metadata={metadata} />
         <EstimateDisclaimer />
       </div>
     );
@@ -172,6 +167,7 @@ function EstimateWindow({
           </div>
         </div>
       </div>
+      <EstimateMetadata metadata={metadata} />
       <EstimateDisclaimer />
     </div>
   );
@@ -182,7 +178,7 @@ function ForecastFacts({
   windowLabel,
   comparableCases,
 }: {
-  confidence: Prediction["confidence"];
+  confidence: TimelinePrediction["confidence"];
   windowLabel: string;
   comparableCases: number;
 }) {
@@ -191,6 +187,37 @@ function ForecastFacts({
       <ForecastFact label="Confidence" value={toTitleCase(confidence)} valueClassName={getConfidenceTextClass(confidence)} />
       <ForecastFact label="Window" value={windowLabel} valueClassName="text-primary" />
       <ForecastFact label="Comparable Cases" value={formatCount(comparableCases)} valueClassName="text-foreground" />
+    </div>
+  );
+}
+
+function EstimateMetadata({ metadata }: { metadata: TimelinePredictionMetadata }) {
+  return (
+    <div className="mt-6 space-y-3 border-t border-border pt-4 text-sm leading-6 text-muted-foreground">
+      <p>
+        This estimate matched <span className="font-medium text-foreground">{lawTypeLabel(metadata.matched_law_type.display_name)}</span> (
+        <span className="font-mono text-xs text-foreground">{metadata.matched_law_type.id}</span>) and used{" "}
+        <span className="font-medium text-foreground">{formatCount(metadata.comparable_cases_count)}</span> comparable cases.
+      </p>
+      <p>{metadata.confidence_reason}</p>
+      <p>
+        Timing used:{" "}
+        <span className="text-foreground">
+          {metadata.timing_fields_used.map((field) => `${field.label}: ${formatMonths(field.value_months)} (${formatSource(field.source)})`).join("; ")}
+        </span>
+        .
+      </p>
+      <p>
+        BVA official data:{" "}
+        <span className="font-medium text-foreground">
+          {metadata.bva_official_data.included
+            ? `included from ${metadata.bva_official_data.source_label ?? "official BVA statistics"}${
+                metadata.bva_official_data.latest_year ? ` through ${metadata.bva_official_data.latest_year}` : ""
+              }`
+            : "not included"}
+        </span>
+        . {metadata.bva_official_data.reason}
+      </p>
     </div>
   );
 }
@@ -281,7 +308,7 @@ function formatShortDate(date: Date) {
   });
 }
 
-function getConfidenceTextClass(confidence: Prediction["confidence"]) {
+function getConfidenceTextClass(confidence: TimelinePrediction["confidence"]) {
   if (confidence === "high") return "text-success";
   if (confidence === "medium") return "text-warning";
   return "text-danger";
@@ -289,4 +316,16 @@ function getConfidenceTextClass(confidence: Prediction["confidence"]) {
 
 function formatCount(value: number) {
   return new Intl.NumberFormat("en-US").format(value);
+}
+
+function formatMonths(value: number) {
+  if (value === 0) return "date anchor";
+  return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(value)} mo`;
+}
+
+function formatSource(source: TimelinePredictionMetadata["timing_fields_used"][number]["source"]) {
+  if (source === "law_type_stats") return "community aggregate";
+  if (source === "bva_official_stats") return "BVA official data";
+  if (source === "application_record") return "your application dates";
+  return "fallback";
 }

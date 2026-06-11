@@ -205,7 +205,7 @@ const handler = async () => {
     snapshot_date: snapshotDate,
     source: "CitizenTrack public application export",
     privacy:
-      "This public export excludes owner_id, emails, auth data, and raw free-text date fields. Applicant labels and comments are included to mirror the source community spreadsheet.",
+      "This public export excludes owner_id, emails, auth data, raw free-text date fields, and comments entered by signed-in users. Historical spreadsheet comments are included only for unowned source rows to mirror the source community spreadsheet.",
     record_count: records.length,
     statistics: workbook.statistics,
     application_type_tabs: workbook.application_type_tabs,
@@ -358,7 +358,7 @@ function toPublicRecord(application: RawApplication, lawTypes: Map<string, LawTy
     public_record_id: publicRecordId(application.id),
     record_origin: origin,
     law_type_id: application.law_type_id,
-    law_type: lawTypes.get(application.law_type_id)?.display_name ?? application.law_type_id,
+    law_type: lawTypeLabel(lawTypes.get(application.law_type_id)?.display_name ?? application.law_type_id),
     submission_country: application.submission_country,
     handling_office: application.handling_office,
     handling_office_kind: application.handling_office_kind,
@@ -381,7 +381,7 @@ function toPublicRecord(application: RawApplication, lawTypes: Map<string, LawTy
     source_row_number: application.source_row_number,
     applicant_label: application.applicant_label,
     source_record_key: application.source_record_key,
-    comments: application.comments,
+    comments: origin === "historical_spreadsheet" ? application.comments : null,
     claimed_from_public_record_id: application.claimed_from_application_id
       ? publicRecordId(application.claimed_from_application_id)
       : null,
@@ -396,6 +396,24 @@ function compareByFreshness(a: RawApplication, b: RawApplication) {
     a.created_at.localeCompare(b.created_at) ||
     a.id.localeCompare(b.id)
   );
+}
+
+function lawTypeLabel(value: string | null | undefined) {
+  if (!value) return "Unknown";
+  const normalized = value.trim().toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
+  if (
+    normalized === "5 stag erklarung" ||
+    normalized === "5 stag erklärung" ||
+    normalized === "5 stag declaration" ||
+    normalized === "stag §5" ||
+    normalized === "stag 5" ||
+    normalized === "stag5" ||
+    normalized === "5 stag" ||
+    normalized === "§5 stag"
+  ) {
+    return "StAG 5";
+  }
+  return value;
 }
 
 function publicRecordId(id: string) {
@@ -416,7 +434,7 @@ function buildSnapshotWorkbook(
       .map(toSnapshotApplicationRow);
 
     return {
-      application_type: lawType.display_name,
+      application_type: lawTypeLabel(lawType.display_name),
       law_type_id: lawType.id,
       row_count: rows.length,
       rows,
@@ -428,7 +446,7 @@ function buildSnapshotWorkbook(
     if (knownLawIds.has(lawTypeId)) continue;
 
     application_type_tabs.push({
-      application_type: lawRecords[0]?.law_type ?? lawTypeId,
+      application_type: lawTypeLabel(lawRecords[0]?.law_type ?? lawTypeId),
       law_type_id: lawTypeId,
       row_count: lawRecords.length,
       rows: lawRecords.sort(compareRecordsForSheet).map(toSnapshotApplicationRow),

@@ -12,7 +12,7 @@ import { createClient } from "@/lib/supabase/browser";
 import type { CitizenshipApplication } from "@/lib/types";
 
 const lawTypes = [
-  ["5_stag_erklarung", "5 StAG Erklarung"],
+  ["5_stag_erklarung", "StAG 5"],
   ["feststellung", "Feststellung"],
   ["artikel_116", "Artikel 116"],
   ["stag_10", "StAG 10"],
@@ -203,7 +203,7 @@ export function ApplicationForm() {
           </Field>
           <div className="lg:col-span-2">
             <Field label="Comments">
-              <Textarea value={form.comments} onChange={(event) => set("comments", event.target.value)} placeholder="E.g StaG5: German grandmother" />
+              <Textarea value={form.comments} onChange={(event) => set("comments", event.target.value)} placeholder="E.g. StAG 5: German grandmother" />
             </Field>
           </div>
           {error ? <Alert className="border-danger/30 text-danger lg:col-span-2">{error}</Alert> : null}

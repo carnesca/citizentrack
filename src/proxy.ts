@@ -1,7 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
 
 export async function proxy(request: NextRequest) {
+  if (process.env.DISABLE_AUTH_PROXY === "1") {
+    return NextResponse.next({ request });
+  }
+
+  const { createServerClient } = await import("@supabase/ssr");
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -21,7 +25,10 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  await supabase.auth.getUser();
+  await Promise.race([
+    supabase.auth.getUser(),
+    new Promise((resolve) => setTimeout(resolve, 2_500)),
+  ]);
   return response;
 }
 
