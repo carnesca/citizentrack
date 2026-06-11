@@ -35,6 +35,7 @@ export function ApplicationForm() {
   const id = search.get("id");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [initialFingerprint, setInitialFingerprint] = useState<string | null>(null);
   const [form, setForm] = useState({
     law_type_id: "5_stag_erklarung",
     applicant_label: "",
@@ -77,6 +78,19 @@ export function ApplicationForm() {
           status: app.status,
           comments: app.comments ?? "",
         });
+        setInitialFingerprint(fingerprintApplicationForm({
+          law_type_id: app.law_type_id,
+          applicant_label: app.applicant_label ?? "",
+          submission_country: app.submission_country ?? "",
+          handling_office: app.handling_office ?? "",
+          handling_office_kind: app.handling_office_kind ?? "consulate",
+          application_method: app.application_method ?? "",
+          submitted_on: app.submitted_on ?? "",
+          aktenzeichen_on: app.aktenzeichen_on ?? "",
+          certificate_received_on: app.certificate_received_on ?? "",
+          status: app.status,
+          comments: app.comments ?? "",
+        }));
         setMilestonesIncomplete({
           aktenzeichen: !app.aktenzeichen_on,
           certificate: !app.certificate_received_on,
@@ -117,16 +131,34 @@ export function ApplicationForm() {
       source_record_key: null,
     };
 
-    const result = id
-      ? await supabase.from("citizenship_applications").update(payload).eq("id", id)
-      : await supabase.from("citizenship_applications").insert(payload);
+    const nextFingerprint = fingerprintApplicationForm(form);
+    const changed = !id || nextFingerprint !== initialFingerprint;
 
-    setLoading(false);
+    if (!changed && id) {
+      setLoading(false);
+      router.push("/app");
+      router.refresh();
+      return;
+    }
+
+    const result = id
+      ? await supabase.from("citizenship_applications").update(payload).eq("id", id).select("id").single()
+      : await supabase.from("citizenship_applications").insert(payload).select("id").single();
+
     if (result.error) {
+      setLoading(false);
       setError(result.error.message);
       return;
     }
-    router.push("/app");
+
+    const applicationId = (result.data as { id: string } | null)?.id ?? id;
+    let estimateError: string | null = null;
+    if (applicationId) {
+      estimateError = await refreshTimelineEstimate(applicationId);
+    }
+
+    setLoading(false);
+    router.push(estimateError ? "/app?estimate_refresh=failed" : "/app");
     router.refresh();
   }
 
@@ -258,4 +290,44 @@ function monthsBetween(start: string, end: string) {
   const days = (to.getTime() - from.getTime()) / 86_400_000;
   if (!Number.isFinite(days) || days < 0) return null;
   return Math.round((days / 30.4375) * 10) / 10;
+}
+
+function fingerprintApplicationForm(form: {
+  law_type_id: string;
+  applicant_label: string;
+  submission_country: string;
+  handling_office: string;
+  handling_office_kind: string;
+  application_method: string;
+  submitted_on: string;
+  aktenzeichen_on: string;
+  certificate_received_on: string;
+  status: string;
+  comments: string;
+}) {
+  return JSON.stringify({
+    law_type_id: form.law_type_id,
+    applicant_label: form.applicant_label.trim(),
+    submission_country: form.submission_country.trim(),
+    handling_office: form.handling_office.trim(),
+    handling_office_kind: form.handling_office_kind,
+    application_method: form.application_method.trim(),
+    submitted_on: form.submitted_on,
+    aktenzeichen_on: form.aktenzeichen_on,
+    certificate_received_on: form.certificate_received_on,
+    status: form.status,
+    comments: form.comments.trim(),
+  });
+}
+
+async function refreshTimelineEstimate(applicationId: string) {
+  const response = await fetch("/api/ai/timeline", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ application_id: applicationId }),
+  });
+
+  if (response.ok) return null;
+  const result = (await response.json().catch(() => null)) as { error?: string } | null;
+  return result?.error ?? "Unknown error";
 }

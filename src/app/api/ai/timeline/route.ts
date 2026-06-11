@@ -4,6 +4,7 @@ import { getLatestBvaStag5Stats } from "@/lib/bva-stats";
 import type { LawTypeStat, TimelinePredictionMetadata } from "@/lib/types";
 import { addMonths, lawTypeLabel } from "@/lib/utils";
 import { getDashboardStats } from "@/lib/data";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 const RequestSchema = z.object({
@@ -46,6 +47,56 @@ const ExplanationSchema = z.object({
   basis: z.string(),
   caveats: z.string(),
 });
+
+export async function GET(request: NextRequest) {
+  const applicationIds = request.nextUrl.searchParams
+    .get("application_ids")
+    ?.split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  if (!applicationIds?.length || applicationIds.some((id) => !z.string().uuid().safeParse(id).success)) {
+    return NextResponse.json({ error: "Invalid application ids." }, { status: 400 });
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Sign in required." }, { status: 401 });
+
+  const dataClient = process.env.SUPABASE_SERVICE_ROLE_KEY ? createAdminClient() : supabase;
+  const { data: applications, error: applicationError } = await dataClient
+    .from("citizenship_applications")
+    .select("id")
+    .eq("owner_id", user.id)
+    .in("id", applicationIds);
+
+  if (applicationError) return NextResponse.json({ error: applicationError.message }, { status: 500 });
+
+  const ownedApplicationIds = (applications ?? []).map((application) => application.id as string);
+  if (!ownedApplicationIds.length) return NextResponse.json({ predictions: [] });
+
+  const { data: predictions, error } = await dataClient
+    .from("application_predictions")
+    .select("application_id,predicted_next_milestone,date_range_start,date_range_end,confidence,similar_cases_count,basis,caveats,statistical_snapshot,created_at")
+    .eq("owner_id", user.id)
+    .in("application_id", ownedApplicationIds)
+    .order("created_at", { ascending: false });
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  const latest = new Map<string, unknown>();
+  for (const prediction of predictions ?? []) {
+    const applicationId = prediction.application_id as string;
+    if (latest.has(applicationId)) continue;
+
+    const shaped = toTimelinePrediction(prediction);
+    if (shaped) latest.set(applicationId, shaped);
+  }
+
+  return NextResponse.json({ predictions: Array.from(latest.values()) });
+}
 
 export async function POST(request: NextRequest) {
   const parsed = RequestSchema.safeParse(await request.json());
@@ -167,7 +218,7 @@ export async function POST(request: NextRequest) {
     caveats: explanation.caveats,
   });
 
-  await supabase.from("application_predictions").insert({
+  const { error: predictionInsertError } = await supabase.from("application_predictions").insert({
     application_id: application.id,
     owner_id: user.id,
     predicted_next_milestone: prediction.predicted_next_milestone,
@@ -194,7 +245,41 @@ export async function POST(request: NextRequest) {
     ai_model: process.env.OPENAI_API_KEY ? process.env.OPENAI_MODEL ?? "gpt-4.1-mini" : "deterministic-fallback",
   });
 
+  if (predictionInsertError) {
+    return NextResponse.json({ error: `Timeline estimate could not be saved: ${predictionInsertError.message}` }, { status: 500 });
+  }
+
   return NextResponse.json(prediction);
+}
+
+function toTimelinePrediction(row: {
+  application_id: string;
+  predicted_next_milestone: string;
+  date_range_start: string | null;
+  date_range_end: string | null;
+  confidence: "low" | "medium" | "high";
+  similar_cases_count: number;
+  basis: string;
+  caveats: string;
+  statistical_snapshot: unknown;
+  created_at: string;
+}) {
+  const snapshot = row.statistical_snapshot as { metadata?: unknown } | null;
+  const parsedMetadata = PredictionSchema.shape.metadata.safeParse(snapshot?.metadata);
+  if (!parsedMetadata.success) return null;
+
+  return {
+    application_id: row.application_id,
+    created_at: row.created_at,
+    predicted_next_milestone: row.predicted_next_milestone,
+    date_range_start: row.date_range_start,
+    date_range_end: row.date_range_end,
+    confidence: row.confidence,
+    similar_cases_count: row.similar_cases_count,
+    basis: row.basis,
+    caveats: row.caveats,
+    metadata: parsedMetadata.data,
+  };
 }
 
 async function explainWithOpenAI(input: Pick<z.infer<typeof PredictionSchema>, "basis" | "caveats" | "metadata">) {

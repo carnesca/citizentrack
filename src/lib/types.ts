@@ -156,3 +156,8 @@ export type TimelinePrediction = {
   caveats: string;
   metadata: TimelinePredictionMetadata;
 };
+
+export type ApplicationTimelinePrediction = TimelinePrediction & {
+  application_id: string;
+  created_at: string;
+};
