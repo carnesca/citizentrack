@@ -2,6 +2,7 @@
 
 import type React from "react";
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LoaderCircle, Lock, Mail, UserRound } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
@@ -23,6 +24,7 @@ export function AuthForm({ initialError }: { initialError?: string | null }) {
   const [loadingAction, setLoadingAction] = useState<AuthAction>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showEmailForm, setShowEmailForm] = useState(false);
 
   const isSignUp = mode === "sign-up";
   const loading = loadingAction !== null;
@@ -165,80 +167,113 @@ export function AuthForm({ initialError }: { initialError?: string | null }) {
             {loadingAction === "google" ? "Redirecting..." : isSignUp ? "Sign up with Google" : "Continue with Google"}
           </Button>
 
-          <div className="flex items-center gap-3 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-            <span className="h-px flex-1 bg-border" />
-            <span>Or use email</span>
-            <span className="h-px flex-1 bg-border" />
-          </div>
+          {!showEmailForm ? (
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-10 w-full text-muted-foreground"
+              onClick={() => {
+                setShowEmailForm(true);
+                setError(null);
+                setMessage(null);
+              }}
+              disabled={loading}
+            >
+              <Mail className="h-4 w-4" />
+              Use email and password instead
+            </Button>
+          ) : (
+            <div className="flex items-center gap-3 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              <span className="h-px flex-1 bg-border" />
+              <span>Email sign-in</span>
+              <span className="h-px flex-1 bg-border" />
+            </div>
+          )}
         </div>
 
-        <form className="mt-4 space-y-4" onSubmit={submit}>
-          <div>
-            <label htmlFor="email" className="mb-2 block text-sm font-medium text-muted-foreground">
-              Email
-            </label>
-            <div className="relative">
-              <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                placeholder="you@example.com"
-                className="pl-10"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-              />
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="password" className="mb-2 block text-sm font-medium text-muted-foreground">
-              Password
-            </label>
-            <div className="relative">
-              <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="password"
-                type="password"
-                autoComplete={isSignUp ? "new-password" : "current-password"}
-                placeholder="At least 8 characters"
-                className="pl-10"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-              />
-            </div>
-          </div>
-
-          {isSignUp ? (
+        {showEmailForm ? (
+          <form className="mt-4 space-y-4" onSubmit={submit}>
             <div>
-              <label htmlFor="confirmPassword" className="mb-2 block text-sm font-medium text-muted-foreground">
-                Confirm password
+              <label htmlFor="email" className="mb-2 block text-sm font-medium text-muted-foreground">
+                Email
               </label>
               <div className="relative">
-                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  id="confirmPassword"
-                  type="password"
-                  autoComplete="new-password"
-                  placeholder="Repeat your password"
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@example.com"
                   className="pl-10"
-                  value={confirmPassword}
-                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
                   required
                 />
               </div>
             </div>
-          ) : null}
 
-          <Button className="h-11 w-full" disabled={loading}>
-            {loadingAction === "credentials" ? "Working..." : isSignUp ? "Create account" : "Log In"}
-          </Button>
+            <div>
+              <label htmlFor="password" className="mb-2 block text-sm font-medium text-muted-foreground">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="password"
+                  type="password"
+                  autoComplete={isSignUp ? "new-password" : "current-password"}
+                  placeholder="At least 8 characters"
+                  className="pl-10"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                />
+              </div>
+            </div>
 
-          {message ? <Alert className="border-success/30 text-success">{message}</Alert> : null}
-          {error || initialError ? <Alert className="border-danger/30 text-danger">{error ?? initialError}</Alert> : null}
-        </form>
+            {isSignUp ? (
+              <div>
+                <label htmlFor="confirmPassword" className="mb-2 block text-sm font-medium text-muted-foreground">
+                  Confirm password
+                </label>
+                <div className="relative">
+                  <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="Repeat your password"
+                    className="pl-10"
+                    value={confirmPassword}
+                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+            ) : null}
+
+            <Button className="h-11 w-full" disabled={loading}>
+              {loadingAction === "credentials" ? "Working..." : isSignUp ? "Create account" : "Log In"}
+            </Button>
+
+            {message ? <Alert className="border-success/30 text-success">{message}</Alert> : null}
+            {error || initialError ? <Alert className="border-danger/30 text-danger">{error ?? initialError}</Alert> : null}
+          </form>
+        ) : error || initialError ? (
+          <Alert className="mt-4 border-danger/30 text-danger">{error ?? initialError}</Alert>
+        ) : null}
+
+        <p className="mt-5 text-center text-xs leading-5 text-muted-foreground">
+          By continuing, you agree to the{" "}
+          <Link href="/terms" className="font-semibold text-primary hover:underline">
+            terms
+          </Link>{" "}
+          and{" "}
+          <Link href="/privacy" className="font-semibold text-primary hover:underline">
+            privacy policy
+          </Link>
+          .
+        </p>
       </CardContent>
     </Card>
   );
