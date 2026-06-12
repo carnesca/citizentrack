@@ -1,9 +1,8 @@
-import { redirect } from "next/navigation";
 import { Dashboard } from "@/components/dashboard";
+import { OAuthCodeHandler } from "@/components/oauth-code-handler";
 import { SiteFooter } from "@/components/site-footer";
 import { TopNav } from "@/components/top-nav";
 import { getDashboardStats } from "@/lib/data";
-import { getSafeRedirectPath } from "@/lib/auth/redirect";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -21,15 +20,7 @@ export default async function Home({
   const params = await searchParams;
 
   if (params.code || (params.token_hash && params.type)) {
-    const callbackParams = new URLSearchParams();
-    const next = getSafeRedirectPath(params.next, "http://localhost", "/app/setup");
-
-    if (params.code) callbackParams.set("code", params.code);
-    if (params.token_hash) callbackParams.set("token_hash", params.token_hash);
-    if (params.type) callbackParams.set("type", params.type);
-    callbackParams.set("next", next);
-
-    redirect(`/auth/confirm?${callbackParams.toString()}`);
+    return <OAuthCodeHandler code={params.code ?? null} fallbackNext={params.next ?? "/app/setup"} />;
   }
 
   const stats = await getDashboardStats();
