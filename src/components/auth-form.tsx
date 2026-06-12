@@ -8,7 +8,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { rememberOAuthNext } from "@/components/oauth-code-handler";
+import { buildAuthConfirmRedirectUrl } from "@/lib/auth/redirect";
 import { createClient } from "@/lib/supabase/browser";
 
 type AuthMode = "sign-in" | "sign-up";
@@ -96,9 +96,7 @@ export function AuthForm({ initialError }: { initialError?: string | null }) {
 
     try {
       const supabase = createClient();
-      const next = isSignUp ? "/app/setup" : "/app";
-      rememberOAuthNext(next);
-      const redirectTo = new URL("/auth/confirm", getAppUrl()).toString();
+      const redirectTo = buildAuthConfirmRedirectUrl(getAppUrl(), isSignUp ? "/app/setup" : "/app");
       const { error: authError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -247,7 +245,7 @@ export function AuthForm({ initialError }: { initialError?: string | null }) {
 }
 
 function getAppUrl() {
-  return window.location.origin || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  return process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
 }
 
 function GoogleMark() {
