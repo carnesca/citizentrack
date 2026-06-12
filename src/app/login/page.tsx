@@ -40,6 +40,9 @@ export default async function LoginPage({
           <p className="mt-3 text-base leading-7 text-muted-foreground">
             Create a free account with Google or email/password to keep your timeline updated and improve the shared dashboard.
           </p>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+            CitizenTrack is open source, independent from any government agency, and only publishes anonymized community statistics.
+          </p>
 
           <div className="mt-8 space-y-4 text-left">
             <Benefit icon={TimerReset} text="Estimate when your case may reach the next stage." />
