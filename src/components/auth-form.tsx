@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { rememberOAuthNext } from "@/components/oauth-code-handler";
-import { buildAuthConfirmRedirectUrl } from "@/lib/auth/redirect";
 import { createClient } from "@/lib/supabase/browser";
 
 type AuthMode = "sign-in" | "sign-up";
@@ -99,7 +98,7 @@ export function AuthForm({ initialError }: { initialError?: string | null }) {
       const supabase = createClient();
       const next = isSignUp ? "/app/setup" : "/app";
       rememberOAuthNext(next);
-      const redirectTo = buildAuthConfirmRedirectUrl(getAppUrl(), next);
+      const redirectTo = new URL("/auth/confirm", getAppUrl()).toString();
       const { error: authError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
