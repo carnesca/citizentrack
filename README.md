@@ -7,7 +7,7 @@ The app is built as an installable PWA with a public dashboard and authenticated
 ## Features
 
 - Public aggregate dashboard for application totals, approvals, processing times, and trends.
-- Email/password authentication with Supabase.
+- Email/password and Google OAuth authentication with Supabase.
 - Private application tracking for user-owned cases.
 - Claim flow for matching legacy spreadsheet entries without double-counting.
 - AI-assisted timeline estimate backed by deterministic aggregate statistics.
@@ -54,10 +54,35 @@ Open [http://localhost:3000](http://localhost:3000).
 | --- | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL. |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Yes | Supabase publishable anon key. |
-| `NEXT_PUBLIC_APP_URL` | Yes | Public app URL for redirects and links. |
+| `NEXT_PUBLIC_APP_URL` | Yes | Public app URL/origin used for auth callbacks, redirects, and links. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Yes for server matching and AI cache writes | Supabase service role key. Never expose this client-side. |
 | `OPENAI_API_KEY` | Optional | Enables AI-written estimate explanations. Without it, deterministic fallback estimates are returned. |
 | `OPENAI_MODEL` | Optional | Defaults to `gpt-4.1-mini`. |
+
+## Google OAuth Setup
+
+Google sign-in uses Supabase Auth and returns through the app callback at `/auth/confirm`.
+
+1. In Google Cloud, create a web OAuth client for this app.
+2. Add authorized JavaScript origins for local and production app URLs:
+   - `http://localhost:3000`
+   - `${NEXT_PUBLIC_APP_URL}`
+   - your Supabase project origin, for example `https://<project-ref>.supabase.co`
+3. Add the Supabase OAuth callback as an authorized redirect URI:
+   - `https://<project-ref>.supabase.co/auth/v1/callback`
+4. In Supabase Auth -> Providers -> Google, enable Google and paste the OAuth client ID and secret.
+5. In Supabase Auth URL configuration, set the site URL and add app callback URLs to the redirect allow list:
+   - `http://localhost:3000/auth/confirm`
+   - `${NEXT_PUBLIC_APP_URL}/auth/confirm`
+6. Set `NEXT_PUBLIC_APP_URL` in every environment so the Google button can build the correct app callback URL.
+
+Google sign-in routes users back to `/app`. Google sign-up routes users to `/app/setup` first so they can add an application, claim an older case, or continue to the dashboard.
+
+### Deploy checklist
+
+- Netlify: set `NEXT_PUBLIC_APP_URL` to your production site origin.
+- Supabase: allow `${NEXT_PUBLIC_APP_URL}/auth/confirm` in the redirect allow list.
+- Google Cloud: allow the production origin and `https://<project-ref>.supabase.co/auth/v1/callback` before enabling the provider for users.
 
 ## Public Data Exports
 
