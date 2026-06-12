@@ -60,6 +60,14 @@ export function SiteFooter() {
         <p className="border-t border-border pt-4 text-xs leading-5">
           Community data is anonymized in public statistics and weekly public exports. Estimates are informational and not official government timelines.
         </p>
+        <div className="flex flex-wrap gap-4 text-xs font-semibold">
+          <Link href="/privacy" className="hover:text-foreground hover:underline">
+            Privacy
+          </Link>
+          <Link href="/terms" className="hover:text-foreground hover:underline">
+            Terms
+          </Link>
+        </div>
       </div>
     </footer>
   );
