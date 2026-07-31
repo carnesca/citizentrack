@@ -119,7 +119,6 @@ export async function POST(request: NextRequest) {
 
   const stats = await getDashboardStats();
   const lawStats = stats.law_type_stats.find((law) => law.law_type_id === application.law_type_id);
-  const comparableCount = lawStats?.total ?? 0;
   const latestBvaStats = application.law_type_id === "5_stag_erklarung" ? getLatestBvaStag5Stats() : null;
   const azField = getTimingField(lawStats, "avg_submission_to_az_months", 3);
   const certificateField = getCertificateTimingField(lawStats);
@@ -129,6 +128,7 @@ export async function POST(request: NextRequest) {
 
   const now = new Date();
   let milestone = "file number";
+  let comparableCount = getRelevantComparableCount(lawStats, "submission_to_az");
   const timingFieldsUsed: TimelinePredictionMetadata["timing_fields_used"] = [
     {
       field: application.submitted_on ? "submitted_on" : "current_date",
@@ -143,6 +143,7 @@ export async function POST(request: NextRequest) {
 
   if (application.aktenzeichen_on && !application.certificate_received_on) {
     milestone = "certificate decision";
+    comparableCount = getRelevantComparableCount(lawStats, "az_to_certificate");
     timingFieldsUsed.splice(
       0,
       timingFieldsUsed.length,
@@ -164,6 +165,7 @@ export async function POST(request: NextRequest) {
     end = addMonths(new Date(application.aktenzeichen_on), certificateMonths + certificateRangePadding);
   } else if (application.certificate_received_on) {
     milestone = "completed";
+    comparableCount = getRelevantComparableCount(lawStats, "submission_to_certificate");
     timingFieldsUsed.splice(0, timingFieldsUsed.length, {
       field: "certificate_received_on",
       label: "Certificate received date",
@@ -177,7 +179,7 @@ export async function POST(request: NextRequest) {
   const officialBvaNote = latestBvaStats
     ? ` This estimate also includes official BVA StAG 5 processing data from 2022-2024; in 2024 BVA recorded ${latestBvaStats.recordedApplications.toLocaleString("en-US")} applications, completed ${latestBvaStats.totalCompleted.toLocaleString("en-US")} cases, issued ${latestBvaStats.certificatesIssued.toLocaleString("en-US")} certificates, and reported ${latestBvaStats.applicationInventory.toLocaleString("en-US")} cases in inventory. That inventory equals roughly ${latestBvaStats.inventoryToCompletionYears} years of 2024 completions, so StAG 5 ranges are treated with extra backlog caution.`
     : "";
-  const confidence = comparableCount >= 50 ? "high" : comparableCount >= 10 ? "medium" : "low";
+  const confidence = getConfidence(comparableCount);
   const metadata: TimelinePredictionMetadata = {
     matched_law_type: {
       id: application.law_type_id,
@@ -377,8 +379,35 @@ function getCertificateTimingField(lawStats: LawTypeStat | undefined): TimelineP
   };
 }
 
+function getRelevantComparableCount(
+  lawStats: LawTypeStat | undefined,
+  timingKind: "submission_to_az" | "az_to_certificate" | "submission_to_certificate",
+) {
+  if (!lawStats) return 0;
+
+  if (timingKind === "submission_to_az") {
+    return lawStats.submission_to_az_comparable_cases ?? fallbackComparableCount(lawStats, lawStats.avg_submission_to_az_months);
+  }
+
+  if (timingKind === "az_to_certificate") {
+    return lawStats.az_to_certificate_comparable_cases ?? fallbackComparableCount(lawStats, lawStats.avg_az_to_certificate_months);
+  }
+
+  return lawStats.submission_to_certificate_comparable_cases ?? fallbackComparableCount(lawStats, lawStats.avg_total_submission_to_certificate_months);
+}
+
+function fallbackComparableCount(lawStats: LawTypeStat, timingValue: number | null) {
+  return timingValue == null ? 0 : lawStats.total;
+}
+
+function getConfidence(comparableCount: number): "low" | "medium" | "high" {
+  if (comparableCount >= 100) return "high";
+  if (comparableCount >= 50) return "medium";
+  return "low";
+}
+
 function getConfidenceReason(comparableCount: number, confidence: "low" | "medium" | "high") {
-  if (confidence === "high") return `High confidence because ${comparableCount.toLocaleString("en-US")} comparable cases matched this application type.`;
-  if (confidence === "medium") return `Medium confidence because ${comparableCount.toLocaleString("en-US")} comparable cases matched this application type.`;
-  return `Low confidence because only ${comparableCount.toLocaleString("en-US")} comparable cases matched this application type.`;
+  if (confidence === "high") return `High confidence because ${comparableCount.toLocaleString("en-US")} comparable cases include the relevant dates for this estimate.`;
+  if (confidence === "medium") return `Medium confidence because ${comparableCount.toLocaleString("en-US")} comparable cases include the relevant dates for this estimate.`;
+  return `Low confidence because only ${comparableCount.toLocaleString("en-US")} comparable cases include the relevant dates for this estimate.`;
 }

@@ -9,6 +9,9 @@ export type LawTypeStat = {
   avg_submission_to_az_months: number | null;
   avg_az_to_certificate_months: number | null;
   avg_total_submission_to_certificate_months: number | null;
+  submission_to_az_comparable_cases?: number | null;
+  az_to_certificate_comparable_cases?: number | null;
+  submission_to_certificate_comparable_cases?: number | null;
   median_az_to_certificate_months: number | null;
   min_az_to_certificate_months: number | null;
   max_az_to_certificate_months: number | null;
