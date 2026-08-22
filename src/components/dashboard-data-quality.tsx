@@ -1,6 +1,6 @@
 "use client";
 
-import { FileSpreadsheet, RefreshCw, Rows3, ShieldCheck } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { DashboardDataQualitySummary } from "@/lib/types";
 
@@ -29,9 +29,6 @@ export function DashboardDataQuality({
   return (
     <div className={["flex flex-wrap gap-1.5 text-[0.68rem] leading-5 text-muted-foreground", className].filter(Boolean).join(" ")}>
       <QualityChip icon={RefreshCw} label={`Refreshed: ${formatRefreshedAt(summary.refreshed_at)}`} title="Dashboard statistics refresh automatically from aggregate application data." />
-      {summary.imported_spreadsheet_rows_included ? <QualityChip icon={FileSpreadsheet} label="Google Sheet with historical cases included" /> : null}
-      {summary.user_rows_included ? <QualityChip icon={Rows3} label="User-submitted cases included" /> : null}
-      <QualityChip icon={ShieldCheck} label={claimHandlingLabel(summary.claim_handling)} />
     </div>
   );
 }
@@ -63,9 +60,4 @@ function formatRefreshedAt(value: string) {
     hour: "numeric",
     minute: "2-digit",
   }).format(date);
-}
-
-function claimHandlingLabel(value: DashboardDataQualitySummary["claim_handling"]) {
-  if (value === "canonical_claims_counted_once") return "Claimed historical cases are de-duplicated";
-  return "Claims are handled";
 }

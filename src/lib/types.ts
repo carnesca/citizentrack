@@ -134,19 +134,46 @@ export type TimelinePredictionMetadata = {
     display_name: string;
   };
   comparable_cases_count: number;
+  confidence_basis?: string;
   timing_fields_used: Array<{
     field: string;
     label: string;
     value_months: number;
     source: "law_type_stats" | "fallback_default" | "bva_official_stats" | "application_record";
   }>;
+  primary_window?: TimelineEstimateWindow;
+  secondary_windows?: TimelineEstimateWindow[];
+  comparison?: {
+    elapsed_submission_months: number | null;
+    elapsed_current_stage_months: number | null;
+    average_completed_submission_to_certificate_months: number | null;
+    average_pending_wait_months: number | null;
+    status_label: string;
+  };
   bva_official_data: {
+    available?: boolean;
     included: boolean;
+    used_for_estimate?: boolean;
     source_label: string | null;
     latest_year: number | null;
+    latest_period_label?: string | null;
+    latest_backlog?: number | null;
+    recent_average_monthly_processed?: number | null;
+    recent_average_monthly_received?: number | null;
     reason: string;
   };
   confidence_reason: string;
+};
+
+export type TimelineEstimateWindow = {
+  id: "file_number" | "certificate";
+  label: string;
+  date_range_start: string | null;
+  date_range_end: string | null;
+  typical_months: number | null;
+  comparable_cases_count: number;
+  is_overdue: boolean;
+  overdue_message: string | null;
 };
 
 export type TimelinePrediction = {

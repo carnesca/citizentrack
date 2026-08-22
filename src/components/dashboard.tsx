@@ -3,6 +3,7 @@
 import type { DashboardStats } from "@/lib/types";
 import { ActivityHighlights } from "@/components/activity-highlights";
 import { ApprovalQueueChart } from "@/components/approval-queue-chart";
+import { BvaWorkloadChart } from "@/components/bva-workload-chart";
 import { DashboardDataQuality, getDashboardDataQualitySummary } from "@/components/dashboard-data-quality";
 import { StatsCards } from "@/components/stats-cards";
 import { TimelineStats } from "@/components/timeline-stats";
@@ -35,6 +36,8 @@ export function Dashboard({ stats }: DashboardProps) {
       </div>
 
       <ApprovalQueueChart stats={stats.approval_queue_stats} laws={stats.law_type_stats} />
+
+      <BvaWorkloadChart />
     </div>
   );
 }

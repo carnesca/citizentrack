@@ -121,7 +121,11 @@ export function ApprovalQueueChart({
             value={queuePosition}
             detail={queueBasis}
           />
-          <QueueMetric label="Approvals Included" value={formatNumber(approvedCases)} detail={selectedLawName} />
+          <QueueMetric
+            label="Approvals Included"
+            value={formatNumber(approvedCases)}
+            detail={selectedLawName}
+          />
         </div>
 
         <div className="h-[18rem] w-full min-w-0 sm:h-[320px]">
