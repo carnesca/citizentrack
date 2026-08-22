@@ -44,7 +44,7 @@ export function BvaWorkloadChart() {
           <div>
             <CardTitle className="flex items-center gap-2 text-lg font-semibold text-foreground">
               <Building2 className="h-5 w-5 text-primary" />
-              Official BVA StAG 5 Workload
+              Official BVA StAG 5 Stats from August 2026
             </CardTitle>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
               Official monthly BVA statistics show StAG 5 applications received, processed, approved, rejected, and in backlog. This is separate from community milestone timelines because it does not include applicant-level dates.

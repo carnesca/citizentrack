@@ -197,7 +197,6 @@ function EstimateWindow({
         ) : null}
       </div>
 
-      <BvaEstimateContext metadata={metadata} />
     </section>
   );
 }
@@ -210,27 +209,6 @@ function RefreshEstimateButton({ refreshing, onRefresh }: { refreshing: boolean;
       <RefreshCw className={["h-4 w-4", refreshing ? "animate-spin" : ""].filter(Boolean).join(" ")} />
       {refreshing ? "Refreshing..." : "Refresh estimate"}
     </Button>
-  );
-}
-
-function BvaEstimateContext({ metadata }: { metadata: TimelinePredictionMetadata }) {
-  const bva = metadata.bva_official_data;
-  if (!bva.included) return null;
-
-  return (
-    <div className="mt-4 rounded-xl bg-background/35 px-3 py-3 text-sm">
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-        <p className="font-medium text-foreground">Official BVA StAG 5 context</p>
-        {bva.latest_period_label ? <p className="text-xs text-muted-foreground">{bva.latest_period_label}</p> : null}
-      </div>
-      <p className="mt-1 text-xs leading-5 text-muted-foreground">
-        BVA reported {formatOptionalCount(bva.latest_backlog)} StAG 5 cases in backlog
-        {bva.recent_average_monthly_processed != null
-          ? ` and recently processed about ${formatCount(bva.recent_average_monthly_processed)} cases per month`
-          : ""}
-        . This is workload context only; it is not used to calculate your applicant-level estimate.
-      </p>
-    </div>
   );
 }
 
@@ -388,9 +366,4 @@ function getConfidenceTextClass(confidence: TimelinePrediction["confidence"]) {
 
 function formatCount(value: number) {
   return new Intl.NumberFormat("en-US").format(value);
-}
-
-function formatOptionalCount(value: number | null | undefined) {
-  if (value == null) return "an unknown number of";
-  return formatCount(value);
 }
