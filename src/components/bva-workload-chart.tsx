@@ -198,17 +198,6 @@ export function BvaWorkloadChart() {
             />
           </div>
 
-          <div className="mt-3 grid gap-2 text-xs leading-5 text-muted-foreground sm:grid-cols-2">
-            <p>
-              <span className="font-medium text-foreground">Current pace:</span> uses the recent 12-month average of{" "}
-              {formatNumber(queueReach.recentAverageMonthlyProcessed)} processed cases per month.
-            </p>
-            <p>
-              <span className="font-medium text-foreground">Improving pace:</span> assumes processing continues increasing gradually, capped at{" "}
-              {formatNumber(Math.round(queueReach.projectedMonthlyProcessingGrowth))} additional cases per month.
-            </p>
-          </div>
-
           <QueueReachBar
             currentPeriodKey={queueReach.currentReach.periodKey}
             targetPeriodKey={queueReach.target.periodKey}
@@ -241,7 +230,11 @@ function QueueReachBar({
 
   return (
     <div className="mt-5" aria-label="Estimated BVA queue position visualization">
-      <div className="grid grid-cols-3 gap-2 text-xs">
+      <div className="mb-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+        <MarkerLegend colorClass="bg-primary" label="Blue marker: where BVA may be now" />
+        <MarkerLegend colorClass="bg-warning" label="Yellow marker: your selected submission month" />
+      </div>
+      <div className="grid gap-2 text-xs sm:hidden">
         <div>
           <p className="font-medium text-foreground">Data starts</p>
           <p className="text-muted-foreground">{formatPeriodKey(startKey)}</p>
@@ -254,6 +247,11 @@ function QueueReachBar({
           <p className="font-medium text-foreground">Your selected month</p>
           <p className="text-muted-foreground">{formatPeriodKey(targetPeriodKey)}</p>
         </div>
+      </div>
+      <div className="relative hidden h-11 text-xs sm:block">
+        <MarkerLabel label="Data starts" value={formatPeriodKey(startKey)} percent={0} align="left" />
+        <MarkerLabel label="BVA may be here" value={formatPeriodKey(currentPeriodKey)} percent={currentPercent} />
+        <MarkerLabel label="Your selected month" value={formatPeriodKey(targetPeriodKey)} percent={targetPercent} align="right" />
       </div>
       <div className="relative mt-3 h-4 rounded-full bg-secondary">
         <div
@@ -270,6 +268,43 @@ function QueueReachBar({
         />
       </div>
     </div>
+  );
+}
+
+function MarkerLabel({
+  label,
+  value,
+  percent,
+  align = "center",
+}: {
+  label: string;
+  value: string;
+  percent: number;
+  align?: "left" | "center" | "right";
+}) {
+  const transform = align === "left" ? "translateX(0)" : align === "right" ? "translateX(-100%)" : "translateX(-50%)";
+
+  return (
+    <div
+      className="absolute top-0 max-w-32"
+      style={{
+        left: `${percent}%`,
+        transform,
+        textAlign: align,
+      }}
+    >
+      <p className="truncate font-medium text-foreground">{label}</p>
+      <p className="truncate text-muted-foreground">{value}</p>
+    </div>
+  );
+}
+
+function MarkerLegend({ colorClass, label }: { colorClass: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-md bg-background/45 px-2 py-1">
+      <span className={["h-2.5 w-2.5 rounded-full", colorClass].join(" ")} />
+      <span>{label}</span>
+    </span>
   );
 }
 
