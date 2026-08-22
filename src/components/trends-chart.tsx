@@ -147,31 +147,42 @@ export function TrendsChart({
               aria-label={showTrendLine ? "Hide trend lines" : "Show trend lines"}
             >
               <span>Trend line</span>
-              <span
-                className={[
-                  "relative inline-flex h-5 w-10 shrink-0 rounded-full border p-0.5 transition-colors",
-                  showTrendLine ? "border-primary/60 bg-primary/40" : "border-border bg-background/70",
-                ].join(" ")}
-              >
-                <span
-                  className={[
-                    "h-4 w-4 rounded-full bg-foreground shadow-sm transition-transform duration-200 ease-out",
-                    showTrendLine ? "translate-x-5" : "translate-x-0",
-                  ].join(" ")}
-                />
-              </span>
+              <SwitchTrack enabled={showTrendLine} />
             </button>
           ) : null}
         </div>
       </CardHeader>
       <CardContent>
         {view === "chart" ? (
-          <TrendsGraph chartReady={chartReady} chartData={chartData} mode={mode} showTrendLine={showTrendLine} />
+          <TrendsGraph
+            chartReady={chartReady}
+            chartData={chartData}
+            mode={mode}
+            showTrendLine={showTrendLine}
+          />
         ) : (
           <TrendsTable data={baseChartData} />
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function SwitchTrack({ enabled }: { enabled: boolean }) {
+  return (
+    <span
+      className={[
+        "relative inline-flex h-5 w-10 shrink-0 rounded-full border p-0.5 transition-colors",
+        enabled ? "border-primary/60 bg-primary/40" : "border-border bg-background/70",
+      ].join(" ")}
+    >
+      <span
+        className={[
+          "h-4 w-4 rounded-full bg-foreground shadow-sm transition-transform duration-200 ease-out",
+          enabled ? "translate-x-5" : "translate-x-0",
+        ].join(" ")}
+      />
+    </span>
   );
 }
 

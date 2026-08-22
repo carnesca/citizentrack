@@ -22,6 +22,8 @@ export function ApplicationList() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [refreshingEstimateId, setRefreshingEstimateId] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -38,7 +40,6 @@ export function ApplicationList() {
 
   useEffect(() => {
     if (!applications.length) {
-      setPredictions({});
       return;
     }
 
@@ -81,6 +82,35 @@ export function ApplicationList() {
     router.refresh();
   }
 
+  async function refreshEstimate(application: CitizenshipApplication) {
+    setRefreshingEstimateId(application.id);
+    setRefreshError(null);
+
+    const response = await fetch("/api/ai/timeline", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ application_id: application.id }),
+    });
+    const result = (await response.json().catch(() => null)) as (ApplicationTimelinePrediction & { error?: string }) | null;
+
+    if (!response.ok || !result || result.error) {
+      setRefreshError(result?.error ?? "Could not refresh the estimate.");
+      setRefreshingEstimateId(null);
+      return;
+    }
+
+    setPredictions((current) => ({
+      ...current,
+      [application.id]: {
+        ...result,
+        application_id: application.id,
+        created_at: "created_at" in result && typeof result.created_at === "string" ? result.created_at : new Date().toISOString(),
+      },
+    }));
+    setRefreshingEstimateId(null);
+    router.refresh();
+  }
+
   return (
     <section className="mb-16 rounded-lg border border-border/70 bg-[radial-gradient(circle_at_top_left,color-mix(in_srgb,var(--primary)_13%,transparent),transparent_26rem),linear-gradient(180deg,color-mix(in_srgb,var(--surface-elevated)_90%,transparent),var(--card))] px-4 py-5 shadow-[0_24px_70px_color-mix(in_srgb,var(--shadow)_58%,transparent),inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-7 sm:py-7 lg:px-8">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -107,6 +137,11 @@ export function ApplicationList() {
         {deleteError ? (
           <div className="mb-3 rounded-md border border-destructive/25 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {deleteError}
+          </div>
+        ) : null}
+        {refreshError ? (
+          <div className="mb-3 rounded-md border border-warning/25 bg-warning/10 px-3 py-2 text-sm text-warning">
+            {refreshError}
           </div>
         ) : null}
         {estimateRefreshFailed ? (
@@ -203,7 +238,12 @@ export function ApplicationList() {
                 </div>
               </div>
               <div className="mt-5">
-                <TimelineEstimate prediction={predictions[application.id]} />
+                <TimelineEstimate
+                  prediction={predictions[application.id]}
+                  applicationLawTypeId={application.law_type_id}
+                  refreshing={refreshingEstimateId === application.id}
+                  onRefresh={() => refreshEstimate(application)}
+                />
               </div>
             </article>
           ))}
